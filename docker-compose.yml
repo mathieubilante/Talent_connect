@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: tc_user
+      POSTGRES_PASSWORD: tc_password
+      POSTGRES_DB: talentconnect
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://tc_user:tc_password@db:5432/talentconnect
+      SECRET_KEY: changez-cette-cle
+      CORS_ORIGINS: http://localhost:5173
+      OTP_DEV_MODE: "true"
+      OTP_DELIVERY: console
+    ports: ["8000:8000"]
+    depends_on: [db]
+    restart: on-failure
+
+volumes:
+  pgdata:
