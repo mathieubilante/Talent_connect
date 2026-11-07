@@ -13,6 +13,7 @@ IA : scikit-learn (TF-IDF), pdfplumber. Frontend : React (Vite), axios, react-ro
 ## Structure
 - backend/app : main.py, config.py, database.py, models.py, schemas.py, security.py, services.py
   - account_rules.py (règles pures : statuts, essai 30 connexions) · accounts.py (accès base des comptes)
+  - kyc_rules.py (règles pures KYC) · crypto.py (chiffrement Fernet) · routers/kyc.py
   - otp_rules.py (règles pures OTP) · otp.py (création/vérification des codes) · delivery.py (envoi : console ou SMTP)
   - matching.py, skills.py, cv_parser.py, assistant_logic.py, seed.py
   - routers/ : auth, account, profiles, offers, applications, favorites, notifications, recommendations, assistant, admin
@@ -23,12 +24,13 @@ IA : scikit-learn (TF-IDF), pdfplumber. Frontend : React (Vite), axios, react-ro
 ## Tables
 users, candidates, companies, job_offers, applications, favorites, notifications, internships*, evaluations* (*pas encore utilisées),
 **user_accounts** (statut + compteur d'essai), **login_history** (historique des connexions),
-**user_contacts** (téléphone, canal, compte vérifié ou non), **otp_codes** (codes OTP hachés).
+**user_contacts** (téléphone, canal, compte vérifié ou non), **otp_codes** (codes OTP hachés),
+**kyc_documents** (métadonnées des documents), **kyc_access_log** (journal d'audit : dépôt, consultation, suppression).
 
 ## Cahier des charges "cycle de vie du compte" (réalisé par étapes)
 1. Statuts (pending, validated, active, rejected) + essai gratuit limité à **30 connexions au total** (pas une durée) + historique des connexions : **FAIT (étape 1)**
 2. Inscription e-mail/téléphone + code OTP : **FAIT (étape 2)**
-3. Documents KYC (CIN ; entreprises : CIN représentant, patente, extrait RNE < 3 mois), stockage chiffré : à faire
+3. Documents KYC (CIN ; entreprises : CIN représentant, patente, extrait RNE < 3 mois), stockage chiffré : **FAIT (étape 3)**
 4. Validation/refus administrateur : à faire (aujourd'hui un simple changement de statut dans /admin/accounts)
 5. Abonnement, paiement, activation, création de l'environnement : à faire
 6. Une seule session active, déconnexion après inactivité, gestion sécurisée des jetons : à faire
@@ -51,6 +53,15 @@ users, candidates, companies, job_offers, applications, favorites, notifications
 - Pour un compte inscrit par téléphone, `users.email` contient un e-mail technique `tel<numéro>@phone.invalid` (la colonne est obligatoire).
 - Envoi : mode `console` (code affiché dans le terminal du backend) par défaut ; `OTP_DELIVERY=smtp` pour un vrai e-mail. **SMS : pas encore branché** (fournisseur à choisir). `OTP_DEV_MODE=true` renvoie aussi le code dans la réponse de l'API pour la démonstration : **à mettre à false en production**.
 - Tout changement de règle OTP : `otp_rules.py`.
+
+## Règles de l'étape 3 (documents KYC, implémentées)
+- Particuliers (candidats) : **CIN**. Entreprises : **CIN du représentant**, **patente**, **extrait RNE de moins de 3 mois** (date d'émission saisie et contrôlée : refus si > 3 mois ou dans le futur).
+- Formats PDF, JPG, PNG, 5 Mo max ; le type est vérifié sur le **contenu réel** du fichier (octets d'en-tête), pas sur l'extension.
+- Stockage : chaque fichier est **chiffré (Fernet, AES + HMAC)** avant d'être écrit dans `uploads/kyc/<nom aléatoire>.enc` ; jamais servi statiquement. Clé : `KYC_ENCRYPTION_KEY` (en dev, dérivée de SECRET_KEY ; **obligatoire en production**). Toute altération d'un fichier est détectée au déchiffrement.
+- Accès : seul le propriétaire ou un administrateur peut télécharger (404 pour les autres). Un document `approved` ne peut plus être remplacé/supprimé. Remplacer un document supprime l'ancien fichier.
+- Journal d'audit `kyc_access_log` (qui, quoi, quand, IP). Notification aux administrateurs quand un dossier devient complet.
+- Les routes /kyc/* restent accessibles quand l'essai est épuisé (c'est là qu'on soumet ses documents).
+- La validation/refus par l'administrateur (statuts `approved`/`rejected`, motif) arrive à l'étape 4 ; les colonnes existent déjà.
 
 ## Comptes de démonstration (python -m app.seed, mot de passe Demo1234!)
 Entreprises : tech@demo.tg, agri@demo.tg, finance@demo.tg · Candidats actifs : kofi@, ama@, yao@, afi@demo.tg

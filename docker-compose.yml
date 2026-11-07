@@ -16,6 +16,7 @@ services:
       CORS_ORIGINS: http://localhost:5173
       OTP_DEV_MODE: "true"
       OTP_DELIVERY: console
+      KYC_ENCRYPTION_KEY: ""
     ports: ["8000:8000"]
     depends_on: [db]
     restart: on-failure

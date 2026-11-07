@@ -1,4 +1,4 @@
-\xef\xbb\xbfTALENTCONNECT - DEMARRAGE RAPIDE (Windows)
+﻿\xef\xbb\xbfTALENTCONNECT - DEMARRAGE RAPIDE (Windows)
 ==========================================
 
 CE QU'IL FAUT AVOIR (une seule fois)
@@ -27,6 +27,12 @@ TESTER L'INSCRIPTION AVEC CODE OTP
 1. Sur le site : "S'inscrire" -> remplir le formulaire -> "Recevoir mon code".
 2. Le code a 6 chiffres s'affiche dans le cadre orange et dans la fenetre noire "API".
 3. Saisissez le code -> vous entrez sur le site.
+
+TESTER LES DOCUMENTS D'IDENTITE (KYC)
+1. Connectez-vous en candidat (kofi@demo.tg) -> menu "Documents" -> choisissez un PDF, JPG ou PNG pour la CIN.
+2. Connectez-vous en entreprise (tech@demo.tg) : 3 documents (CIN du representant, patente, extrait RNE avec sa date d'emission).
+3. Connectez-vous en administrateur : section "Dossiers de documents (KYC)" -> telechargez un document.
+Les fichiers sont stockes CHIFFRES dans backend\uploads\kyc (illisibles sans la cle).
 
 SI QUELQUE CHOSE NE MARCHE PAS
 - "Python n'est pas installe" : installez Python et cochez "Add Python to PATH".

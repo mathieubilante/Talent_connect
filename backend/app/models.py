@@ -1,8 +1,8 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import (Column, DateTime, Enum, Float, ForeignKey, Integer,
-                        String, Text, Boolean)
+from sqlalchemy import (Column, Date, DateTime, Enum, Float, ForeignKey, Integer,
+                        String, Text, Boolean, UniqueConstraint)
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -164,4 +164,36 @@ class OtpCode(Base):
     attempts = Column(Integer, nullable=False, default=0)
     max_attempts = Column(Integer, nullable=False, default=5)
     consumed = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class KycDocument(Base):
+    """Document d'identité d'un utilisateur. Le fichier est stocké chiffré ; ici, seulement ses métadonnées."""
+    __tablename__ = "kyc_documents"
+    __table_args__ = (UniqueConstraint("user_id", "doc_type", name="uq_kyc_user_doctype"),)
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    doc_type = Column(String(30), nullable=False)          # cin | cin_representant | patente | extrait_rne
+    original_name = Column(String(255), default="")
+    mime_type = Column(String(50), nullable=False)
+    size_bytes = Column(Integer, nullable=False)
+    sha256 = Column(String(64), nullable=False)             # empreinte du fichier d'origine
+    storage_name = Column(String(80), nullable=False)       # nom aléatoire du fichier chiffré
+    issue_date = Column(Date, nullable=True)                # date d'émission (extrait RNE)
+    status = Column(String(20), nullable=False, default="submitted")   # submitted | approved | rejected (étape 4)
+    review_note = Column(Text, default="")
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
+    reviewed_at = Column(DateTime, nullable=True)
+
+
+class KycAccessLog(Base):
+    """Journal d'audit : qui a déposé, consulté ou supprimé quel document."""
+    __tablename__ = "kyc_access_log"
+    id = Column(Integer, primary_key=True)
+    document_id = Column(Integer, nullable=True)
+    owner_id = Column(Integer, nullable=False)
+    actor_id = Column(Integer, nullable=False)
+    action = Column(String(20), nullable=False)             # upload | replace | view | delete
+    doc_type = Column(String(30), default="")
+    ip_address = Column(String(64), default="")
     created_at = Column(DateTime, default=datetime.utcnow)

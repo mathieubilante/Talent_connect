@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api, { errorMessage } from "../api";
 
 export default function Account() {
@@ -30,9 +31,12 @@ export default function Account() {
           <h3>Essai gratuit</h3>
           <div className="bar"><div className={`fill ${info.trial_exhausted ? "faible" : info.alert ? "moyen" : "bon"}`} style={{ width: `${pct}%` }} /></div>
           <p className={info.trial_exhausted || info.alert ? "error" : "muted"}>{info.message}</p>
+          {info.status !== "active" && !info.trial_exhausted && (
+            <p className="muted small">📁 Vous pouvez déjà <Link to="/kyc" className="link">déposer vos documents d'identité</Link> pour préparer la validation de votre compte.</p>
+          )}
           {info.trial_exhausted && (
             <ol className="muted">
-              <li>Soumettre vos documents d'identité (bientôt disponible)</li>
+              <li><Link to="/kyc" className="link">Soumettre vos documents d'identité</Link></li>
               <li>Validation de votre compte par l'administration</li>
               <li>Choix d'un abonnement et paiement</li>
               <li>Activation complète, sans perte de vos données</li>

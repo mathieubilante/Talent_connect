@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api, { errorMessage } from "../api";
+import api, { downloadDocument, errorMessage } from "../api";
 
 const LABELS = { recue: "Reçues", preselectionnee: "Présélectionnées", entretien: "Entretiens", acceptee: "Acceptées", refusee: "Refusées" };
 
@@ -7,10 +7,11 @@ export default function Admin() {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [accounts, setAccounts] = useState([]);
+  const [kyc, setKyc] = useState([]);
   const [error, setError] = useState("");
   useEffect(() => {
-    Promise.all([api.get("/admin/stats"), api.get("/admin/users"), api.get("/admin/accounts")])
-      .then(([s, u, a]) => { setStats(s.data); setUsers(u.data); setAccounts(a.data); })
+    Promise.all([api.get("/admin/stats"), api.get("/admin/users"), api.get("/admin/accounts"), api.get("/admin/kyc")])
+      .then(([s, u, a, k]) => { setStats(s.data); setUsers(u.data); setAccounts(a.data); setKyc(k.data); })
       .catch((e) => setError(errorMessage(e)));
   }, []);
 
@@ -56,6 +57,17 @@ export default function Admin() {
             <td><select value={a.status} onChange={(e) => changeStatus(a.user_id, e.target.value)}>
               <option value="pending">En attente</option><option value="validated">Validé</option>
               <option value="active">Actif</option><option value="rejected">Refusé</option></select></td></tr>)}</tbody></table></div></div>
+      <div className="card"><h3>Dossiers de documents (KYC)</h3>
+        {kyc.length === 0 && <p className="muted">Aucun document déposé pour le moment.</p>}
+        {kyc.map((k) => (
+          <div key={k.user_id} style={{ borderTop: "1px solid #edf1f5", padding: "10px 0" }}>
+            <div className="row"><b>{k.email}</b>
+              <span className={k.complete ? "tag st-acceptee" : "tag stage"}>{k.uploaded_count}/{k.required_count} {k.complete ? "· complet" : "· incomplet"}</span></div>
+            <div className="chips">{k.documents.map((d) => (
+              <button key={d.id} className="chip ok" style={{ border: 0, cursor: "pointer" }}
+                      onClick={() => downloadDocument(d.id, d.original_name)} title="Télécharger (déchiffré)">⬇ {d.label}</button>))}</div>
+          </div>))}
+      </div>
       <div className="card"><h3>Utilisateurs récents</h3>
         <div className="scroll"><table><thead><tr><th>ID</th><th>E-mail</th><th>Rôle</th><th>Inscription</th></tr></thead>
           <tbody>{users.map((u) => <tr key={u.id}><td>{u.id}</td><td>{u.email}</td><td>{u.role}</td>

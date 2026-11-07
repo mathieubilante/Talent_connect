@@ -29,3 +29,11 @@ SMTP_USER = os.getenv("SMTP_USER", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 SMTP_FROM = os.getenv("SMTP_FROM", "no-reply@talentconnect.tg")
 DEFAULT_COUNTRY_CODE = os.getenv("DEFAULT_COUNTRY_CODE", "+228")   # Togo
+
+# --- Documents KYC (étape 3) ---
+KYC_DIR = os.getenv("KYC_DIR", "uploads/kyc")
+MAX_KYC_SIZE = 5 * 1024 * 1024   # 5 Mo par document
+# Clé de chiffrement Fernet (44 caractères). Générer :
+#   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+# Sans clé, une clé de développement est dérivée de SECRET_KEY (à ne pas utiliser en production).
+KYC_ENCRYPTION_KEY = os.getenv("KYC_ENCRYPTION_KEY", "")

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
@@ -178,3 +178,32 @@ class ChatOut(BaseModel):
 
 class CoverLetterIn(BaseModel):
     offer_id: int
+
+
+class KycRequirementOut(BaseModel):
+    doc_type: str
+    label: str
+    help: str
+    needs_issue_date: bool
+
+
+class KycDocumentOut(BaseModel):
+    id: int
+    doc_type: str
+    label: str
+    original_name: str
+    mime_type: str
+    size_bytes: int
+    issue_date: Optional[date] = None
+    expires_on: Optional[date] = None
+    status: str
+    review_note: str = ""
+    uploaded_at: datetime
+
+
+class KycStatusOut(BaseModel):
+    role: str
+    required: list[KycRequirementOut]
+    documents: list[KycDocumentOut]
+    missing: list[str]
+    complete: bool

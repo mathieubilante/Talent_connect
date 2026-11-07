@@ -27,3 +27,14 @@ export const errorMessage = (e) =>
   (e?.response?.data?.detail?.toString?.() || "Une erreur est survenue").replace(/^[A-Z_]+:\s*/, "");
 
 export default api;
+
+// Télécharge un document KYC (le fichier est déchiffré par le serveur, uniquement pour son propriétaire ou l'administrateur)
+export async function downloadDocument(id, filename) {
+  const res = await api.get(`/kyc/documents/${id}/download`, { responseType: "blob" });
+  const url = URL.createObjectURL(res.data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename || "document";
+  a.click();
+  URL.revokeObjectURL(url);
+}

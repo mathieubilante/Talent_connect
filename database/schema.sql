@@ -146,3 +146,33 @@ CREATE TABLE otp_codes (
     created_at   TIMESTAMP DEFAULT NOW()
 );
 CREATE INDEX idx_otp_user ON otp_codes(user_id, created_at DESC);
+
+-- Étape 3 : documents KYC (fichiers stockés CHIFFRÉS sur le disque, ici seulement les métadonnées)
+CREATE TABLE kyc_documents (
+    id            SERIAL PRIMARY KEY,
+    user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    doc_type      VARCHAR(30) NOT NULL,        -- cin | cin_representant | patente | extrait_rne
+    original_name VARCHAR(255) DEFAULT '',
+    mime_type     VARCHAR(50) NOT NULL,
+    size_bytes    INTEGER NOT NULL,
+    sha256        VARCHAR(64) NOT NULL,
+    storage_name  VARCHAR(80) NOT NULL,        -- nom aléatoire du fichier chiffré
+    issue_date    DATE,                        -- date d'émission (extrait RNE)
+    status        VARCHAR(20) NOT NULL DEFAULT 'submitted',   -- submitted | approved | rejected
+    review_note   TEXT DEFAULT '',
+    uploaded_at   TIMESTAMP DEFAULT NOW(),
+    reviewed_at   TIMESTAMP,
+    CONSTRAINT uq_kyc_user_doctype UNIQUE (user_id, doc_type)
+);
+CREATE INDEX idx_kyc_user ON kyc_documents(user_id);
+
+CREATE TABLE kyc_access_log (
+    id          SERIAL PRIMARY KEY,
+    document_id INTEGER,
+    owner_id    INTEGER NOT NULL,
+    actor_id    INTEGER NOT NULL,
+    action      VARCHAR(20) NOT NULL,          -- upload | replace | view | delete
+    doc_type    VARCHAR(30) DEFAULT '',
+    ip_address  VARCHAR(64) DEFAULT '',
+    created_at  TIMESTAMP DEFAULT NOW()
+);
