@@ -31,7 +31,7 @@ users, candidates, companies, job_offers, applications, favorites, notifications
 1. Statuts (pending, validated, active, rejected) + essai gratuit limité à **30 connexions au total** (pas une durée) + historique des connexions : **FAIT (étape 1)**
 2. Inscription e-mail/téléphone + code OTP : **FAIT (étape 2)**
 3. Documents KYC (CIN ; entreprises : CIN représentant, patente, extrait RNE < 3 mois), stockage chiffré : **FAIT (étape 3)**
-4. Validation/refus administrateur : à faire (aujourd'hui un simple changement de statut dans /admin/accounts)
+4. Validation/refus administrateur : **FAIT (étape 4)**
 5. Abonnement, paiement, activation, création de l'environnement : à faire
 6. Une seule session active, déconnexion après inactivité, gestion sécurisée des jetons : à faire
 7. Alertes de sécurité (e-mail, SMS, WhatsApp, Telegram), détection de comportements suspects : à faire
@@ -62,6 +62,14 @@ users, candidates, companies, job_offers, applications, favorites, notifications
 - Journal d'audit `kyc_access_log` (qui, quoi, quand, IP). Notification aux administrateurs quand un dossier devient complet.
 - Les routes /kyc/* restent accessibles quand l'essai est épuisé (c'est là qu'on soumet ses documents).
 - La validation/refus par l'administrateur (statuts `approved`/`rejected`, motif) arrive à l'étape 4 ; les colonnes existent déjà.
+
+## Règles de l'étape 4 (validation administrative, implémentées)
+- L'administrateur examine chaque document (`POST /admin/kyc/documents/{id}/review`) : **valider** ou **refuser avec motif obligatoire**. Un document n'est examiné qu'une fois (état `submitted` uniquement). Un document refusé peut être remplacé par l'utilisateur (il repasse à `submitted`, motif effacé) ; un document validé est verrouillé.
+- Décision sur le compte (`POST /admin/kyc/users/{id}/decision`) : **valider** (impossible tant que tous les documents requis ne sont pas fournis ET validés : l'API liste les raisons) → statut `validated` ; **refuser** (motif obligatoire) → statut `rejected` : la connexion est bloquée et le motif est affiché à l'utilisateur.
+- Un compte déjà `validated` ou `active` ne peut plus être re-décidé. L'ancien `PATCH /admin/accounts/{id}/status` reste comme outil de support/démo.
+- Notification à l'utilisateur à chaque décision ; journal d'audit étendu (`approve`, `reject`, `account_validated`, `account_rejected` dans `kyc_access_log`). Aucune nouvelle table : colonnes déjà prévues à l'étape 3.
+- Interface : l'administrateur voit les dossiers à examiner en premier ; « Mon compte » affiche un suivi des étapes (OTP, documents, validation, abonnement).
+- Règles dans `review_rules.py`. `validated` reste soumis à la limite des 30 connexions tant que l'abonnement n'est pas payé (étape 5).
 
 ## Comptes de démonstration (python -m app.seed, mot de passe Demo1234!)
 Entreprises : tech@demo.tg, agri@demo.tg, finance@demo.tg · Candidats actifs : kofi@, ama@, yao@, afi@demo.tg

@@ -21,6 +21,9 @@ def get_or_create_account(db: Session, user: models.User) -> models.UserAccount:
 def account_payload(acc: models.UserAccount) -> dict:
     data = trial_info(acc.status, acc.trial_logins_used, acc.trial_limit)
     data["last_login_at"] = acc.last_login_at
+    data["rejection_reason"] = acc.rejection_reason or ""
+    if acc.status == "rejected" and acc.rejection_reason:
+        data["message"] += f" Motif : {acc.rejection_reason}"
     return data
 
 

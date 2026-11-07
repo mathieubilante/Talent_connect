@@ -130,7 +130,7 @@ def login(request: Request, form: OAuth2PasswordRequestForm = Depends(),
     if user.role != models.Role.admin:
         acc = get_or_create_account(db, user)
         if acc.status == "rejected":
-            info = trial_info(acc.status, acc.trial_logins_used, acc.trial_limit)
-            raise HTTPException(status.HTTP_403_FORBIDDEN, f"ACCOUNT_REJECTED: {info['message']}")
+            msg = account_payload(acc)["message"]
+            raise HTTPException(status.HTTP_403_FORBIDDEN, f"ACCOUNT_REJECTED: {msg}")
     ip, ua = _client(request)
     return _token(user, record_login(db, user, ip, ua))

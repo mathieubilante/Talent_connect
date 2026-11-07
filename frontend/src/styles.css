@@ -95,3 +95,10 @@ table { width:100%; border-collapse:collapse; font-size:.9rem; } th, td { text-a
 .devcode { background:#fff4dc; color:#8a5a00; border-radius:8px; padding:10px 14px; font-size:.9rem; }
 .small-tabs { margin-bottom:12px; } .small-tabs button { flex:1; }
 .link:disabled, .btn:disabled { opacity:.5; cursor:not-allowed; }
+
+.stepper { list-style:none; padding:0; margin:8px 0; }
+.stepper li { display:flex; align-items:center; gap:12px; padding:7px 0; color:var(--muted); }
+.stepper .dot { width:28px; height:28px; border-radius:50%; background:#e6ecf1; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:.85rem; }
+.stepper li.done { color:var(--text); } .stepper li.done .dot { background:var(--green); color:#fff; }
+.stepper li.current { color:var(--blue); font-weight:600; } .stepper li.current .dot { background:var(--orange); color:#fff; }
+.stepper li.failed { color:var(--red); } .stepper li.failed .dot { background:var(--red); color:#fff; }

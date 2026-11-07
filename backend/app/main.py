@@ -26,7 +26,7 @@ ensure_admin()
 
 app = FastAPI(title="TalentConnect API",
               description="Plateforme intelligente de recrutement, d'emploi et de gestion des stages",
-              version="0.5.0")
+              version="0.6.0")
 
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
@@ -39,4 +39,4 @@ app.include_router(kyc.admin_router)
 
 @app.get("/", tags=["Santé"])
 def root():
-    return {"app": "TalentConnect API", "version": "0.5.0", "status": "ok", "docs": "/docs"}
+    return {"app": "TalentConnect API", "version": "0.6.0", "status": "ok", "docs": "/docs"}

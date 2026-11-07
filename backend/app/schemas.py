@@ -52,6 +52,7 @@ class AccountOut(BaseModel):
     access_allowed: bool
     alert: bool
     message: str
+    rejection_reason: str = ""
     last_login_at: Optional[datetime] = None
 
 
@@ -207,3 +208,13 @@ class KycStatusOut(BaseModel):
     documents: list[KycDocumentOut]
     missing: list[str]
     complete: bool
+
+
+class DocumentReviewIn(BaseModel):
+    decision: Literal["approved", "rejected"]
+    note: str = ""
+
+
+class AccountDecisionIn(BaseModel):
+    decision: Literal["validate", "reject"]
+    reason: str = ""

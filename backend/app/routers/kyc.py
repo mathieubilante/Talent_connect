@@ -9,11 +9,15 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Resp
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
+from ..account_rules import STATUS_LABELS
+from ..accounts import get_or_create_account
 from ..config import KYC_DIR, MAX_KYC_SIZE
 from ..crypto import decrypt_bytes, encrypt_bytes, sha256_hex
 from ..database import get_db
 from ..kyc_rules import (ALLOWED_MIME, DOC_TYPES, detect_file_type, missing_documents, required_for,
                          rne_expires_on, rne_is_recent)
+from ..review_rules import (account_decision_error, can_review_document, review_error,
+                            validation_blockers)
 from ..security import get_user_unrestricted, require_role
 from ..services import notify
 
@@ -169,6 +173,10 @@ def delete_document(doc_id: int, request: Request,
     return _status(db, user)
 
 
+def _doc_statuses(db: Session, user_id: int) -> dict:
+    return {d.doc_type: d.status for d in db.query(models.KycDocument).filter_by(user_id=user_id)}
+
+
 @admin_router.get("")
 def admin_list(admin: models.User = Depends(require_role(models.Role.admin)), db: Session = Depends(get_db)):
     rows = []
@@ -177,11 +185,73 @@ def admin_list(admin: models.User = Depends(require_role(models.Role.admin)), db
         if not docs:
             continue
         role = u.role.value
+        statuses = {d.doc_type: d.status for d in docs}
+        acc = get_or_create_account(db, u)
         rows.append({"user_id": u.id, "email": u.email, "role": role,
+                     "account_status": acc.status, "account_status_label": STATUS_LABELS.get(acc.status, acc.status),
                      "required_count": len(required_for(role)), "uploaded_count": len(docs),
-                     "complete": not missing_documents(role, [d.doc_type for d in docs]),
+                     "complete": not missing_documents(role, list(statuses)),
+                     "pending_review": sum(1 for d in docs if d.status == "submitted"),
+                     "can_validate": acc.status == "pending" and not validation_blockers(required_for(role), statuses),
                      "documents": [{"id": d.id, "doc_type": d.doc_type,
                                     "label": DOC_TYPES.get(d.doc_type, {}).get("label", d.doc_type),
                                     "original_name": d.original_name, "status": d.status,
-                                    "uploaded_at": d.uploaded_at} for d in docs]})
+                                    "review_note": d.review_note or "", "uploaded_at": d.uploaded_at} for d in docs]})
+    rows.sort(key=lambda r: (-r["pending_review"], -r["user_id"]))   # les dossiers à examiner d'abord
     return rows
+
+
+@admin_router.post("/documents/{doc_id}/review")
+def review_document(doc_id: int, data: schemas.DocumentReviewIn, request: Request,
+                    admin: models.User = Depends(require_role(models.Role.admin)), db: Session = Depends(get_db)):
+    """Valide ou refuse un document (le refus exige un motif ; l'utilisateur pourra le remplacer)."""
+    doc = db.get(models.KycDocument, doc_id)
+    if not doc:
+        raise HTTPException(404, "Document introuvable")
+    error = review_error(data.decision, data.note)
+    if error:
+        raise HTTPException(422, error)
+    if not can_review_document(doc.status):
+        raise HTTPException(409, "Ce document a déjà été examiné")
+    label = DOC_TYPES.get(doc.doc_type, {}).get("label", doc.doc_type)
+    doc.status, doc.review_note, doc.reviewed_at = data.decision, data.note.strip(), datetime.utcnow()
+    _log(db, doc.id, doc.user_id, admin.id, "approve" if data.decision == "approved" else "reject", doc.doc_type, request)
+    if data.decision == "approved":
+        notify(db, doc.user_id, f"Votre document « {label} » a été validé.")
+    else:
+        notify(db, doc.user_id, f"Votre document « {label} » a été refusé. Motif : {doc.review_note}. "
+                                "Vous pouvez en envoyer un nouveau.")
+    db.commit()
+    return {"id": doc.id, "status": doc.status}
+
+
+@admin_router.post("/users/{user_id}/decision")
+def decide_account(user_id: int, data: schemas.AccountDecisionIn, request: Request,
+                   admin: models.User = Depends(require_role(models.Role.admin)), db: Session = Depends(get_db)):
+    """Décision finale sur le compte : valider (tous les documents doivent être validés) ou refuser (motif obligatoire)."""
+    target = db.get(models.User, user_id)
+    if not target or target.role == models.Role.admin:
+        raise HTTPException(404, "Utilisateur introuvable")
+    error = account_decision_error(data.decision, data.reason)
+    if error:
+        raise HTTPException(422, error)
+    acc = get_or_create_account(db, target)
+    if acc.status in ("validated", "active"):
+        raise HTTPException(409, "Ce compte est déjà validé")
+
+    if data.decision == "validate":
+        blockers = validation_blockers(required_for(target.role.value), _doc_statuses(db, target.id))
+        if blockers:
+            raise HTTPException(409, "Validation impossible : " + " ; ".join(blockers))
+        acc.status, acc.rejection_reason = "validated", ""
+        message = ("Votre compte a été validé. Il reste à souscrire un abonnement pour l'activer complètement.")
+        action = "account_validated"
+    else:
+        acc.status, acc.rejection_reason = "rejected", data.reason.strip()
+        message = f"Votre compte a été refusé après vérification. Motif : {acc.rejection_reason}"
+        action = "account_rejected"
+    acc.status_changed_at = datetime.utcnow()
+    _log(db, None, target.id, admin.id, action, "", request)
+    notify(db, target.id, message)
+    db.commit()
+    return {"user_id": target.id, "status": acc.status}

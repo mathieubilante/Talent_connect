@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from . import models
 from .account_rules import trial_info
-from .accounts import get_or_create_account
+from .accounts import account_payload, get_or_create_account
 from .config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY
 from .database import get_db
 
@@ -52,6 +52,7 @@ def get_current_user(user: models.User = Depends(get_user_unrestricted),
         return user
     acc = get_or_create_account(db, user)
     info = trial_info(acc.status, acc.trial_logins_used, acc.trial_limit)
+    info["message"] = account_payload(acc)["message"]
     if not info["access_allowed"]:
         code = "ACCOUNT_REJECTED" if acc.status == "rejected" else "TRIAL_EXPIRED"
         raise HTTPException(status.HTTP_403_FORBIDDEN, f"{code}: {info['message']}")

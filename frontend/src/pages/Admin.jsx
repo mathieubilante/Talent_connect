@@ -8,6 +8,7 @@ export default function Admin() {
   const [users, setUsers] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [kyc, setKyc] = useState([]);
+  const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   useEffect(() => {
     Promise.all([api.get("/admin/stats"), api.get("/admin/users"), api.get("/admin/accounts"), api.get("/admin/kyc")])
@@ -15,6 +16,22 @@ export default function Admin() {
       .catch((e) => setError(errorMessage(e)));
   }, []);
 
+  const reloadKyc = async () => {
+    setKyc((await api.get("/admin/kyc")).data);
+    setAccounts((await api.get("/admin/accounts")).data);
+  };
+  const reviewDoc = async (id, decision) => {
+    const note = decision === "rejected" ? window.prompt("Motif du refus (obligatoire) :") : "";
+    if (decision === "rejected" && !note) return;
+    try { await api.post(`/admin/kyc/documents/${id}/review`, { decision, note }); setNotice(decision === "approved" ? "Document validé ✓" : "Document refusé, l'utilisateur est notifié."); await reloadKyc(); }
+    catch (e) { setNotice(errorMessage(e)); }
+  };
+  const decide = async (userId, decision) => {
+    const reason = decision === "reject" ? window.prompt("Motif du refus du compte (obligatoire) :") : "";
+    if (decision === "reject" && !reason) return;
+    try { await api.post(`/admin/kyc/users/${userId}/decision`, { decision, reason }); setNotice(decision === "validate" ? "Compte validé ✓ L'utilisateur est notifié." : "Compte refusé, l'utilisateur est notifié."); await reloadKyc(); }
+    catch (e) { setNotice(errorMessage(e)); }
+  };
   const changeStatus = async (id, status) => {
     const reason = status === "rejected" ? window.prompt("Motif du refus :") || "" : "";
     await api.patch(`/admin/accounts/${id}/status`, { status, reason });
@@ -57,15 +74,39 @@ export default function Admin() {
             <td><select value={a.status} onChange={(e) => changeStatus(a.user_id, e.target.value)}>
               <option value="pending">En attente</option><option value="validated">Validé</option>
               <option value="active">Actif</option><option value="rejected">Refusé</option></select></td></tr>)}</tbody></table></div></div>
-      <div className="card"><h3>Dossiers de documents (KYC)</h3>
+      <div className="card"><h3>Examen des dossiers (KYC)</h3>
+        {notice && <p className="info">{notice}</p>}
         {kyc.length === 0 && <p className="muted">Aucun document déposé pour le moment.</p>}
         {kyc.map((k) => (
-          <div key={k.user_id} style={{ borderTop: "1px solid #edf1f5", padding: "10px 0" }}>
-            <div className="row"><b>{k.email}</b>
-              <span className={k.complete ? "tag st-acceptee" : "tag stage"}>{k.uploaded_count}/{k.required_count} {k.complete ? "· complet" : "· incomplet"}</span></div>
-            <div className="chips">{k.documents.map((d) => (
-              <button key={d.id} className="chip ok" style={{ border: 0, cursor: "pointer" }}
-                      onClick={() => downloadDocument(d.id, d.original_name)} title="Télécharger (déchiffré)">⬇ {d.label}</button>))}</div>
+          <div key={k.user_id} style={{ borderTop: "1px solid #edf1f5", padding: "12px 0" }}>
+            <div className="row">
+              <div><b>{k.email}</b> <span className="muted small">({k.role === "company" ? "entreprise" : "candidat"})</span></div>
+              <div className="row gap">
+                <span className={k.complete ? "tag st-acceptee" : "tag stage"}>{k.uploaded_count}/{k.required_count} {k.complete ? "complet" : "incomplet"}</span>
+                <span className={`tag ${k.account_status === "validated" || k.account_status === "active" ? "st-acceptee" : k.account_status === "rejected" ? "st-refusee" : ""}`}>
+                  {k.account_status_label}</span>
+                {k.pending_review > 0 && <span className="tag st-preselectionnee">{k.pending_review} à examiner</span>}
+              </div>
+            </div>
+            {k.documents.map((d) => (
+              <div className="row" key={d.id} style={{ padding: "6px 0" }}>
+                <span>📎 {d.label}
+                  <span className={d.status === "approved" ? "tag st-acceptee" : d.status === "rejected" ? "tag st-refusee" : "tag st-preselectionnee"} style={{ marginLeft: 8 }}>
+                    {d.status === "approved" ? "Validé" : d.status === "rejected" ? "Refusé" : "À examiner"}</span>
+                  {d.review_note && <span className="muted small"> · {d.review_note}</span>}</span>
+                <span className="row gap">
+                  <button className="link" onClick={() => downloadDocument(d.id, d.original_name).catch((e) => setNotice(errorMessage(e)))}>Télécharger</button>
+                  {d.status === "submitted" && (<>
+                    <button className="btn" style={{ padding: "5px 12px" }} onClick={() => reviewDoc(d.id, "approved")}>Valider</button>
+                    <button className="btn-danger" onClick={() => reviewDoc(d.id, "rejected")}>Refuser</button></>)}
+                </span>
+              </div>))}
+            {k.account_status === "pending" && (
+              <div className="row end gap">
+                <button className="btn" disabled={!k.can_validate} title={k.can_validate ? "" : "Tous les documents doivent être validés"}
+                        onClick={() => decide(k.user_id, "validate")}>✔ Valider le compte</button>
+                <button className="btn-danger" onClick={() => decide(k.user_id, "reject")}>✖ Refuser le compte</button>
+              </div>)}
           </div>))}
       </div>
       <div className="card"><h3>Utilisateurs récents</h3>
