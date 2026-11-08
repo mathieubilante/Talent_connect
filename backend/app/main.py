@@ -5,7 +5,7 @@ from . import models
 from .config import ADMIN_EMAIL, ADMIN_PASSWORD, CORS_ORIGINS
 from .database import Base, SessionLocal, engine
 from .routers import (account, admin, applications, assistant, auth, favorites, kyc,
-                      notifications, offers, profiles, recommendations)
+                      notifications, offers, profiles, public, recommendations)
 from .security import hash_password
 
 Base.metadata.create_all(bind=engine)
@@ -26,17 +26,17 @@ ensure_admin()
 
 app = FastAPI(title="TalentConnect API",
               description="Plateforme intelligente de recrutement, d'emploi et de gestion des stages",
-              version="0.6.0")
+              version="0.7.0")
 
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 for r in (auth, account, profiles, offers, applications, favorites, notifications,
-          recommendations, assistant, admin, kyc):
+          recommendations, assistant, admin, kyc, public):
     app.include_router(r.router)
 app.include_router(kyc.admin_router)
 
 
 @app.get("/", tags=["Santé"])
 def root():
-    return {"app": "TalentConnect API", "version": "0.6.0", "status": "ok", "docs": "/docs"}
+    return {"app": "TalentConnect API", "version": "0.7.0", "status": "ok", "docs": "/docs"}

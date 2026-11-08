@@ -14,6 +14,7 @@ IA : scikit-learn (TF-IDF), pdfplumber. Frontend : React (Vite), axios, react-ro
 - backend/app : main.py, config.py, database.py, models.py, schemas.py, security.py, services.py
   - account_rules.py (règles pures : statuts, essai 30 connexions) · accounts.py (accès base des comptes)
   - kyc_rules.py (règles pures KYC) · crypto.py (chiffrement Fernet) · routers/kyc.py
+  - search_rules.py (offres similaires, pagination) · routers/public.py (API publique sans connexion)
   - otp_rules.py (règles pures OTP) · otp.py (création/vérification des codes) · delivery.py (envoi : console ou SMTP)
   - matching.py, skills.py, cv_parser.py, assistant_logic.py, seed.py
   - routers/ : auth, account, profiles, offers, applications, favorites, notifications, recommendations, assistant, admin
@@ -70,6 +71,13 @@ users, candidates, companies, job_offers, applications, favorites, notifications
 - Notification à l'utilisateur à chaque décision ; journal d'audit étendu (`approve`, `reject`, `account_validated`, `account_rejected` dans `kyc_access_log`). Aucune nouvelle table : colonnes déjà prévues à l'étape 3.
 - Interface : l'administrateur voit les dossiers à examiner en premier ; « Mon compte » affiche un suivi des étapes (OTP, documents, validation, abonnement).
 - Règles dans `review_rules.py`. `validated` reste soumis à la limite des 30 connexions tant que l'abonnement n'est pas payé (étape 5).
+
+## Site d'emploi public (version 0.7)
+- Un visiteur NON connecté peut parcourir le site comme un site d'emploi : accueil avec recherche (mot-clé, lieu, type), recherches populaires, secteurs, offres récentes, entreprises ; liste d'offres avec filtres (type, secteur, lieu) et pagination ; détail d'une offre avec offres similaires ; annuaire et profil des entreprises.
+- API publique (`/public/*`) : `offers` (filtres + pagination serveur), `offers/{id}`, `offers/{id}/similar`, `companies`, `companies/{id}`, `meta` (lieux, secteurs, compétences), `stats`. Elle masque les données privées (nombre de candidatures = 0, pas d'e-mails) et les offres clôturées ou expirées.
+- Candidat connecté : mêmes pages avec score de compatibilité, favoris, lettre de motivation générée ; pagination côté client (le tri par score est calculé à la volée). « Postuler » pour un visiteur renvoie vers la connexion puis revient à l'offre (`?next=`).
+- Frontend : utils.js (dates relatives, logos à initiales), components Navbar/SiteFooter/SearchBar/Pagination/OfferCard/ApplyModal/CompanyLogo ; pages Home, Offers, OfferDetail, Companies, CompanyProfile. Les pages privées gardent leurs routes.
+- Pas de salaire ni de durée dans les offres (nécessiterait de modifier la table job_offers : à faire avec Alembic).
 
 ## Comptes de démonstration (python -m app.seed, mot de passe Demo1234!)
 Entreprises : tech@demo.tg, agri@demo.tg, finance@demo.tg · Candidats actifs : kofi@, ama@, yao@, afi@demo.tg

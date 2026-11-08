@@ -8,11 +8,13 @@ export default function Login() {
   const [params] = useSearchParams();
   const [mode, setMode] = useState(params.get("mode") === "register" ? "register" : "login");
   const [step, setStep] = useState("form");            // form | otp
-  const [form, setForm] = useState({ channel: "email", identifier: "", password: "", role: "candidate", name: "" });
+  const [form, setForm] = useState({ channel: "email", identifier: "", password: "", role: params.get("role") === "company" ? "company" : "candidate", name: "" });
   const [otp, setOtp] = useState({ identifier: "", masked: "", devCode: "", code: "", resendIn: 0 });
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const navigate = useNavigate();
+  const next = params.get("next");
+  const goAfter = (role) => navigate(next && next.startsWith("/") && !next.startsWith("//") ? next : HOME_BY_ROLE[role] || "/offers");
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   // compte à rebours avant de pouvoir redemander un code
@@ -34,7 +36,7 @@ export default function Login() {
       if (mode === "login") {
         const res = await api.post("/auth/login", new URLSearchParams({ username: form.identifier, password: form.password }));
         saveSession(res.data);
-        navigate(HOME_BY_ROLE[res.data.role] || "/offers");
+        goAfter(res.data.role);
       } else {
         const payload = {
           channel: form.channel, password: form.password, role: form.role, name: form.name,
@@ -62,7 +64,7 @@ export default function Login() {
     try {
       const res = await api.post("/auth/verify-otp", { identifier: otp.identifier, code: otp.code });
       saveSession(res.data);
-      navigate(HOME_BY_ROLE[res.data.role] || "/offers");
+      goAfter(res.data.role);
     } catch (err) { setError(errorMessage(err)); }
   };
 

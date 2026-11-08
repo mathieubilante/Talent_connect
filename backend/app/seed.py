@@ -1,4 +1,6 @@
 """Données de démonstration : python -m app.seed  (idempotent)."""
+from datetime import datetime, timedelta
+
 from . import models
 from .database import Base, SessionLocal, engine
 from .accounts import get_or_create_account
@@ -20,12 +22,18 @@ OFFERS = {
          "Conception d'interfaces web modernes et responsives pour des applications métier."),
         ("Stage UI/UX Designer", "stage", "figma, ui/ux, html, css", "Lomé",
          "Création de maquettes et prototypes pour une plateforme mobile."),
+        ("Administrateur systèmes et réseaux", "emploi", "linux, réseaux, docker, cybersécurité", "Lomé",
+         "Gestion de l'infrastructure, supervision des serveurs et sécurité du réseau de l'entreprise."),
+        ("Stage data science", "stage", "python, machine learning, pandas, sql", "Lomé",
+         "Exploration de données et construction de modèles de prédiction pour nos clients."),
     ],
     "agri@demo.tg": [
         ("Stage analyste de données", "stage", "python, pandas, excel, sql", "Kara",
          "Analyse des données de production agricole et création de tableaux de bord."),
         ("Responsable marketing digital", "emploi", "marketing digital, communication, réseaux sociaux", "Kara",
          "Pilotage de la communication en ligne et des campagnes sur les réseaux sociaux."),
+        ("Stage community manager", "stage", "réseaux sociaux, communication, marketing digital", "Kara",
+         "Animation des réseaux sociaux de l'entreprise et création de contenus."),
     ],
     "finance@demo.tg": [
         ("Stage assistant comptable", "stage", "comptabilité, excel, finance", "Lomé",
@@ -61,9 +69,10 @@ def run() -> None:
             comp = models.Company(user_id=u.id, name=name, sector=sector, city=city,
                                   description=f"{name}, entreprise du secteur {sector}.")
             db.add(comp); db.flush()
-            for title, kind, skills, loc, desc in OFFERS[email]:
+            for i, (title, kind, skills, loc, desc) in enumerate(OFFERS[email]):
                 db.add(models.JobOffer(company_id=comp.id, title=title, offer_type=models.OfferType(kind),
-                                       required_skills=skills, location=loc, description=desc))
+                                       required_skills=skills, location=loc, description=desc,
+                                       created_at=datetime.utcnow() - timedelta(days=i * 2, hours=i * 3)))
         for email, first, last, edu, skills, text in CANDIDATES:
             if db.query(models.User).filter_by(email=email).first():
                 continue

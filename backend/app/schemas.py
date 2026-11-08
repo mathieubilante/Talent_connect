@@ -121,6 +121,10 @@ class OfferOut(BaseModel):
     missing_skills: list[str] = []
     is_favorite: bool = False
     applications_count: int = 0
+    company_id: int = 0
+    company_sector: str = ""
+    company_city: str = ""
+    created_at: Optional[datetime] = None
 
 
 class ApplicationCreate(BaseModel):
@@ -218,3 +222,23 @@ class DocumentReviewIn(BaseModel):
 class AccountDecisionIn(BaseModel):
     decision: Literal["validate", "reject"]
     reason: str = ""
+
+
+class OfferPage(BaseModel):
+    total: int
+    page: int
+    page_size: int
+    items: list[OfferOut]
+
+
+class CompanyPublicOut(BaseModel):
+    id: int
+    name: str
+    sector: str = ""
+    city: str = ""
+    description: str = ""
+    active_offers: int = 0
+
+
+class CompanyDetailOut(CompanyPublicOut):
+    offers: list[OfferOut] = []

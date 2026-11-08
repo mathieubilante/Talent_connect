@@ -1,6 +1,8 @@
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
@@ -15,6 +17,8 @@ def offer_to_out(offer: models.JobOffer, candidate: Optional[models.Candidate] =
                  fav_ids: frozenset = frozenset()) -> schemas.OfferOut:
     out = schemas.OfferOut.model_validate(offer)
     out.company_name = offer.company.name
+    out.company_sector = offer.company.sector or ""
+    out.company_city = offer.company.city or ""
     out.is_favorite = offer.id in fav_ids
     out.applications_count = len(offer.applications)
     if candidate:
@@ -33,10 +37,14 @@ def favorite_ids(db: Session, user: models.User) -> frozenset:
 
 @router.get("", response_model=list[schemas.OfferOut])
 def list_offers(q: Optional[str] = None, offer_type: Optional[models.OfferType] = None,
-                location: Optional[str] = None, sort: str = "recent",
+                location: Optional[str] = None, sector: Optional[str] = None, sort: str = "recent",
                 db: Session = Depends(get_db),
                 user: models.User = Depends(get_current_user)):
-    query = db.query(models.JobOffer).filter(models.JobOffer.is_active.is_(True))
+    query = (db.query(models.JobOffer).join(models.Company)
+             .filter(models.JobOffer.is_active.is_(True),
+                     or_(models.JobOffer.deadline.is_(None), models.JobOffer.deadline >= datetime.utcnow())))
+    if sector:
+        query = query.filter(models.Company.sector.ilike(f"%{sector}%"))
     if offer_type:
         query = query.filter(models.JobOffer.offer_type == offer_type)
     if location:
@@ -45,7 +53,8 @@ def list_offers(q: Optional[str] = None, offer_type: Optional[models.OfferType] 
         like = f"%{q}%"
         query = query.filter(models.JobOffer.title.ilike(like) |
                              models.JobOffer.description.ilike(like) |
-                             models.JobOffer.required_skills.ilike(like))
+                             models.JobOffer.required_skills.ilike(like) |
+                             models.Company.name.ilike(like))
     offers = query.order_by(models.JobOffer.created_at.desc()).all()
 
     candidate = user.candidate if user.role == models.Role.candidate else None
