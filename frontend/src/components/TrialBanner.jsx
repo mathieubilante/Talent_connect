@@ -15,7 +15,7 @@ export default function TrialBanner() {
     <div className={`trial ${level}`}>
       <div className="row">
         <span><b>{info.status_label}</b> · {info.message}</span>
-        <Link to="/account" className="link">Détails</Link>
+        <span className="row gap">{info.status === "validated" && <Link to="/billing" className="link">S'abonner</Link>}<Link to="/account" className="link">Détails</Link></span>
       </div>
       <div className="bar"><div className={`fill ${level === "ok" ? "bon" : level === "warn" ? "moyen" : "faible"}`} style={{ width: `${pct}%` }} /></div>
     </div>

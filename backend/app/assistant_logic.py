@@ -1,4 +1,4 @@
-"""Assistant conversationnel de TalentConnect (version à règles, sans service externe).
+"""TConnect IA : assistant conversationnel de TalentConnect (version à règles, sans service externe).
 
 Il comprend des intentions par mots-clés et s'appuie sur le contexte réel de
 l'utilisateur (profil, offres recommandées, candidatures). Évolution prévue :
@@ -46,6 +46,8 @@ def reply(message: str, role: str, ctx: dict) -> dict:
     name = ctx.get("first_name") or ""
     hello = f"Bonjour {name} !" if name else "Bonjour !"
 
+    if role == "visitor":
+        return _reply_visitor(t, ctx)
     if role == "company":
         return _reply_company(t, hello, ctx)
     return _reply_candidate(t, hello, ctx)
@@ -146,4 +148,64 @@ def _reply_company(t: str, hello: str, ctx: dict) -> dict:
                          "(présélectionnée, entretien, acceptée, refusée) : le candidat est notifié." + extra,
                 "quick_replies": ["Trouver des candidats"]}
     return {"reply": "Je peux vous aider à rédiger une offre, trouver des profils compatibles ou gérer vos candidatures.",
+            "quick_replies": qr}
+
+
+def _reply_visitor(t: str, ctx: dict) -> dict:
+    """Réponses pour un visiteur non connecté : explique la plateforme et oriente vers l'inscription."""
+    qr = ["Comment créer un compte ?", "Comment postuler ?", "Que fait TConnect IA ?", "Je suis recruteur"]
+
+    if _has(t, "bonjour", "salut", "hello", "bonsoir", "coucou"):
+        return {"reply": "Bonjour ! Je suis TConnect IA, l'assistant de TalentConnect (version bêta). "
+                         "Je peux vous expliquer comment fonctionne la plateforme : inscription, candidature, "
+                         "score de compatibilité, documents.", "quick_replies": qr}
+    if _has(t, "merci"):
+        return {"reply": "Avec plaisir ! N'hésitez pas si vous avez d'autres questions.", "quick_replies": qr}
+    if _has(t, "tconnect", "assistant", "que fait", "que fais", "ia ", " ia", "intelligence"):
+        return {"reply": "TConnect IA est l'assistant intelligent de la plateforme (version bêta). Une fois connecté, "
+                         "il connaît votre profil : il vous recommande des offres, génère une lettre de motivation "
+                         "adaptée à chaque offre, donne des conseils pour votre CV et vos entretiens. "
+                         "Sans compte, je peux déjà vous expliquer comment utiliser le site.",
+                "quick_replies": ["Comment créer un compte ?", "Comment fonctionne le score ?"]}
+    if _has(t, "essai", "gratuit", "30", "connexions", "abonnement", "prix", "payer"):
+        return {"reply": "L'essai gratuit est limité à 30 connexions au total (et non à une durée). Le compteur est "
+                         "toujours visible. Ensuite, il faut valider votre compte avec vos documents d'identité puis "
+                         "souscrire un abonnement.", "quick_replies": ["Quels documents fournir ?"]}
+    if _has(t, "compte", "inscri", "creer", "google", "telephone", "otp", "connexion", "connecter"):
+        return {"reply": "Pour commencer : cliquez sur « S'inscrire », puis choisissez votre moyen : e-mail, numéro de "
+                         "téléphone ou compte Google. Avec l'e-mail ou le téléphone, vous recevez un code à 6 chiffres "
+                         "à saisir pour valider votre compte. Ensuite, vous pouvez aussi vous connecter avec un code "
+                         "reçu, sans mot de passe.", "quick_replies": ["Comment postuler ?", "Combien de connexions gratuites ?"]}
+    if _has(t, "postul", "candidat"):
+        return {"reply": "Ouvrez une offre et cliquez sur « Postuler ». Il faut un compte : vous êtes envoyé vers la "
+                         "connexion puis ramené à l'offre. Une lettre de motivation est générée pour vous et vous pouvez "
+                         "la modifier avant l'envoi. Vous suivez ensuite l'avancement de votre candidature.",
+                "quick_replies": ["Comment fonctionne le score ?", "Quels documents fournir ?"]}
+    if _has(t, "score", "compatib", "matching", "pourcentage"):
+        return {"reply": "Chaque offre reçoit un score de 0 à 100 %. Il compare vos compétences à celles demandées "
+                         "(60 % du score) et le texte de votre profil à celui de l'offre (40 %). Vous voyez les compétences "
+                         "que vous avez, en vert, et celles à renforcer, en rouge. Le score apparaît une fois connecté.",
+                "quick_replies": ["Comment créer un compte ?"]}
+    if _has(t, "document", "kyc", "identite", "cin", "patente", "rne"):
+        return {"reply": "Particulier : une carte d'identité (CIN). Entreprise : CIN du représentant, patente et extrait "
+                         "du RNE de moins de 3 mois. Les fichiers sont chiffrés et seuls vous et l'administration y avez "
+                         "accès. Un administrateur valide ou refuse chaque document avec un motif.",
+                "quick_replies": ["Combien de connexions gratuites ?"]}
+    if _has(t, "recruteur", "entreprise", "publier", "recruter"):
+        return {"reply": "Créez un compte « Entreprise », complétez vos documents, puis publiez vos offres avec les "
+                         "compétences requises. Les candidatures arrivent classées par compatibilité et l'IA vous "
+                         "propose les profils les plus adaptés à chaque offre.", "quick_replies": ["Comment créer un compte ?"]}
+    if _has(t, "cv", "curriculum"):
+        return {"reply": "Après inscription, déposez votre CV en PDF : vos compétences sont détectées automatiquement "
+                         "et ajoutées à votre profil, ce qui améliore vos scores de compatibilité.",
+                "quick_replies": ["Comment créer un compte ?"]}
+    if _has(t, "offre", "emploi", "stage", "trouver", "cherche", "poste"):
+        latest = ctx.get("latest_offers") or []
+        extra = ""
+        if latest:
+            extra = " Offres récentes : " + " ; ".join(f"{o['title']} ({o['company']})" for o in latest[:3]) + "."
+        return {"reply": "Utilisez la barre de recherche de la page d'accueil (mot-clé, ville, emploi ou stage) ou le "
+                         "menu « Emplois » et « Stages »." + extra, "quick_replies": ["Comment postuler ?"]}
+    return {"reply": "Je n'ai pas bien compris. Je peux expliquer : la création de compte (e-mail, téléphone, Google), "
+                     "la candidature, le score de compatibilité, l'essai gratuit, les documents à fournir et l'espace recruteur.",
             "quick_replies": qr}

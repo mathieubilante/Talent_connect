@@ -242,3 +242,40 @@ class CompanyPublicOut(BaseModel):
 
 class CompanyDetailOut(CompanyPublicOut):
     offers: list[OfferOut] = []
+
+
+class GoogleLoginIn(BaseModel):
+    credential: str
+    role: Literal["candidate", "company"] = "candidate"
+
+
+class OtpRequestIn(BaseModel):
+    identifier: str
+
+
+class OtpLoginIn(BaseModel):
+    identifier: str
+    code: str = Field(min_length=4, max_length=10)
+
+
+class CheckoutIn(BaseModel):
+    plan_code: str
+    months: int
+
+
+class SimulatePaymentIn(BaseModel):
+    outcome: Literal["success", "failure"]
+    reason: str = ""
+
+
+class AlertPrefsIn(BaseModel):
+    notify_email: bool = True
+    notify_sms: bool = False
+    notify_whatsapp: bool = False
+    notify_telegram: bool = False
+    phone: str = ""
+    telegram_chat_id: str = ""
+
+
+class UnlockIn(BaseModel):
+    identifier: str

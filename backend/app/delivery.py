@@ -31,3 +31,23 @@ def deliver_otp(channel: str, destination: str, code: str) -> str:
             return "failed"
     print(f"\n[OTP] canal={channel} destinataire={destination} code={code}\n", flush=True)
     return "console"
+
+
+def send_email_message(to: str, subject: str, body: str) -> str:
+    """E-mail générique (alertes). Retourne 'email', 'console' ou 'failed'."""
+    if OTP_DELIVERY == "smtp" and SMTP_HOST:
+        try:
+            msg = EmailMessage()
+            msg["Subject"], msg["From"], msg["To"] = subject, SMTP_FROM, to
+            msg.set_content(body)
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as server:
+                server.starttls()
+                if SMTP_USER:
+                    server.login(SMTP_USER, SMTP_PASSWORD)
+                server.send_message(msg)
+            return "email"
+        except Exception as exc:
+            print(f"[ALERTE] échec d'envoi e-mail vers {to} : {exc}", flush=True)
+            return "failed"
+    print(f"\n[ALERTE e-mail] {to} : {subject}\n{body}\n", flush=True)
+    return "console"

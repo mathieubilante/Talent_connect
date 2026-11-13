@@ -9,10 +9,12 @@ export default function Admin() {
   const [accounts, setAccounts] = useState([]);
   const [kyc, setKyc] = useState([]);
   const [notice, setNotice] = useState("");
+  const [billing, setBilling] = useState(null);
+  const [sec, setSec] = useState(null);
   const [error, setError] = useState("");
   useEffect(() => {
-    Promise.all([api.get("/admin/stats"), api.get("/admin/users"), api.get("/admin/accounts"), api.get("/admin/kyc")])
-      .then(([s, u, a, k]) => { setStats(s.data); setUsers(u.data); setAccounts(a.data); setKyc(k.data); })
+    Promise.all([api.get("/admin/stats"), api.get("/admin/users"), api.get("/admin/accounts"), api.get("/admin/kyc"), api.get("/admin/billing"), api.get("/admin/security")])
+      .then(([s, u, a, k, b, c]) => { setStats(s.data); setUsers(u.data); setAccounts(a.data); setKyc(k.data); setBilling(b.data); setSec(c.data); })
       .catch((e) => setError(errorMessage(e)));
   }, []);
 
@@ -30,6 +32,10 @@ export default function Admin() {
     const reason = decision === "reject" ? window.prompt("Motif du refus du compte (obligatoire) :") : "";
     if (decision === "reject" && !reason) return;
     try { await api.post(`/admin/kyc/users/${userId}/decision`, { decision, reason }); setNotice(decision === "validate" ? "Compte validé ✓ L'utilisateur est notifié." : "Compte refusé, l'utilisateur est notifié."); await reloadKyc(); }
+    catch (e) { setNotice(errorMessage(e)); }
+  };
+  const unlock = async (identifier) => {
+    try { await api.post("/admin/security/unlock", { identifier }); setNotice(`Compte « ${identifier} » débloqué ✓`); setSec((await api.get("/admin/security")).data); }
     catch (e) { setNotice(errorMessage(e)); }
   };
   const changeStatus = async (id, status) => {
@@ -109,6 +115,34 @@ export default function Admin() {
               </div>)}
           </div>))}
       </div>
+      {billing && (
+        <div className="card"><h3>💳 Abonnements et paiements</h3>
+          <div className="kpis">
+            <div className="card kpi"><b>{new Intl.NumberFormat("fr-FR").format(billing.total_paid)}</b><span>FCFA encaissés</span></div>
+            <div className="card kpi"><b>{billing.paid_count}</b><span>paiements réussis</span></div>
+            <div className="card kpi"><b>{billing.active_subscriptions}</b><span>abonnements en cours</span></div>
+          </div>
+          {billing.by_plan.map((p) => <p key={p.plan} className="muted">{p.plan} : {p.count} paiement(s) · {new Intl.NumberFormat("fr-FR").format(p.amount)} FCFA</p>)}
+          <div className="scroll"><table><thead><tr><th>Date</th><th>Client</th><th>Montant</th><th>Statut</th><th>Reçu</th></tr></thead>
+            <tbody>{billing.payments.map((p) => <tr key={p.id}><td>{new Date(p.created_at + "Z").toLocaleString("fr-FR")}</td><td>{p.email}</td>
+              <td>{new Intl.NumberFormat("fr-FR").format(p.amount)} {p.currency}</td><td>{p.status}</td><td>{p.receipt_number || "—"}</td></tr>)}</tbody></table></div>
+        </div>
+      )}
+      {sec && (
+        <div className="card"><h3>🔐 Sécurité</h3>
+          <p className="muted">{sec.failed_last_24h} tentative(s) de connexion échouée(s) sur 24 h · canaux : e-mail {sec.providers.email}, SMS {sec.providers.sms}, WhatsApp {sec.providers.whatsapp}, Telegram {sec.providers.telegram}</p>
+          {sec.locked.length > 0 && <>
+            <h4>Comptes verrouillés</h4>
+            {sec.locked.map((l) => (
+              <div className="row" key={l.identifier}><span>{l.identifier} · {l.failures} échecs · encore {Math.ceil(l.remaining_seconds / 60)} min</span>
+                <button className="btn" style={{ padding: "5px 12px" }} onClick={() => unlock(l.identifier)}>Débloquer</button></div>))}
+          </>}
+          <h4>Dernières alertes</h4>
+          {sec.alerts.length === 0 && <p className="muted">Aucune alerte.</p>}
+          <div className="scroll"><table><thead><tr><th>Date</th><th>Compte</th><th>Alerte</th><th>Canaux</th></tr></thead>
+            <tbody>{sec.alerts.map((a) => <tr key={a.id}><td>{new Date(a.created_at + "Z").toLocaleString("fr-FR")}</td><td>{a.email}</td><td>{a.icon} {a.title}</td><td>{a.channels}</td></tr>)}</tbody></table></div>
+        </div>
+      )}
       <div className="card"><h3>Utilisateurs récents</h3>
         <div className="scroll"><table><thead><tr><th>ID</th><th>E-mail</th><th>Rôle</th><th>Inscription</th></tr></thead>
           <tbody>{users.map((u) => <tr key={u.id}><td>{u.id}</td><td>{u.email}</td><td>{u.role}</td>

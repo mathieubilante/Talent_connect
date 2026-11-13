@@ -2,16 +2,29 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api, { getRole } from "../api";
 import CompanyLogo from "../components/CompanyLogo.jsx";
+import { BellArt, ChatArt, CvArt, HeroArt, LockArt, MatchArt } from "../components/Illustrations.jsx";
 import SearchBar from "../components/SearchBar.jsx";
 import { timeAgo } from "../utils";
 
 const FALLBACK_SECTORS = ["Technologie", "Finance", "Agriculture", "Marketing", "Santé", "Éducation"];
-const FEATURES = [
-  ["🎯", "Matching intelligent", "Chaque offre reçoit un score de compatibilité avec votre profil, avec les compétences en commun et celles à renforcer."],
-  ["📄", "Analyse du CV", "Déposez votre CV PDF : vos compétences sont détectées et ajoutées à votre profil automatiquement."],
-  ["🤖", "Assistant IA", "Conseils CV, lettre de motivation générée pour chaque offre, préparation d'entretien."],
-  ["🔔", "Suivi en temps réel", "Notifications à chaque étape : candidature reçue, présélection, entretien, décision."],
+const SHOWCASE = [
+  { Art: MatchArt, title: "Voyez tout de suite si une offre vous correspond",
+    points: ["Un score de 0 à 100 % calculé pour chaque offre", "60 % des points : vos compétences comparées à celles demandées",
+             "Les compétences à renforcer sont indiquées en rouge", "Les offres sont triées de la plus à la moins compatible"] },
+  { Art: CvArt, title: "Déposez votre CV, la plateforme lit vos compétences",
+    points: ["CV au format PDF, 5 Mo maximum", "Python, SQL, React, Excel, comptabilité… détectés automatiquement",
+             "Votre profil est complété en moins d'une minute"] },
+  { Art: ChatArt, title: "TConnect IA répond à vos questions",
+    points: ["Une lettre de motivation générée pour chaque offre, que vous modifiez avant l'envoi", "Conseils pour votre CV et vos entretiens",
+             "Recommandation des offres les plus adaptées à votre profil", "Disponible pour les visiteurs comme pour les membres (version bêta)"] },
+  { Art: BellArt, title: "Suivez chaque étape de votre candidature",
+    points: ["Une notification à chaque changement : reçue, présélectionnée, entretien, décision", "Le motif vous est communiqué en cas de refus",
+             "L'historique de vos connexions est consultable"] },
+  { Art: LockArt, title: "Vos documents d'identité sont protégés",
+    points: ["Fichiers chiffrés sur le serveur", "Visibles uniquement par vous et par l'administration",
+             "Validation document par document, avec motif en cas de refus"] },
 ];
+
 
 export default function Home() {
   const role = getRole();
@@ -37,6 +50,8 @@ export default function Home() {
   return (
     <>
       <section className="hero2">
+        <img className="hero-bg" src="/images/hero.jpg" alt="" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+        <HeroArt />
         <h1>Trouvez l'emploi ou le stage<br />qui vous correspond</h1>
         <p>Des offres d'entreprises, un score de compatibilité calculé par l'IA et un suivi de vos candidatures.</p>
         <SearchBar big onSearch={search} />
@@ -103,18 +118,22 @@ export default function Home() {
         </>
       )}
 
-      <h2 className="section-title">Pourquoi TalentConnect</h2>
-      <div className="features">
-        {FEATURES.map(([icon, title, text]) => (
-          <div className="card feature" key={title}><div className="icon">{icon}</div><h3>{title}</h3><p className="muted">{text}</p></div>
-        ))}
-      </div>
+      <h2 className="section-title">Ce que vous pouvez faire sur la plateforme</h2>
+      {SHOWCASE.map(({ Art, title, points }, i) => (
+        <section key={title} className={`showcase ${i % 2 ? "reverse" : ""}`}>
+          <div className="showcase-text">
+            <h3>{title}</h3>
+            <ul>{points.map((p) => <li key={p}>{p}</li>)}</ul>
+          </div>
+          <div className="showcase-art"><Art /></div>
+        </section>
+      ))}
 
       <h2 className="section-title">Comment ça marche</h2>
       <div className="steps">
-        <div className="card"><span className="num">1</span><h3>Créez votre compte</h3><p className="muted">Inscription par e-mail ou téléphone, avec un code de vérification.</p></div>
-        <div className="card"><span className="num">2</span><h3>Complétez votre profil</h3><p className="muted">Compétences, CV et documents d'identité pour valider votre compte.</p></div>
-        <div className="card"><span className="num">3</span><h3>Postulez et suivez</h3><p className="muted">Candidature en un clic avec lettre générée, notifications à chaque étape.</p></div>
+        <div className="card"><span className="num">1</span><h3>Inscrivez-vous en 1 minute</h3><p className="muted">Par e-mail, téléphone ou compte Google. Un code à 6 chiffres confirme votre identité.</p></div>
+        <div className="card"><span className="num">2</span><h3>Complétez votre dossier</h3><p className="muted">Déposez votre CV et vos documents d'identité ; l'administration valide votre compte.</p></div>
+        <div className="card"><span className="num">3</span><h3>Postulez en un clic</h3><p className="muted">Lettre de motivation générée, score de compatibilité et suivi par notifications.</p></div>
       </div>
 
       {role !== "company" && (

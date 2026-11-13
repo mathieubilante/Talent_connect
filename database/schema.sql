@@ -176,3 +176,93 @@ CREATE TABLE kyc_access_log (
     ip_address  VARCHAR(64) DEFAULT '',
     created_at  TIMESTAMP DEFAULT NOW()
 );
+
+-- Étape 5 : abonnement, paiement, espace dédié  |  Étape 6 : sessions
+CREATE TABLE subscriptions (
+    id         SERIAL PRIMARY KEY,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    plan_code  VARCHAR(40) NOT NULL,
+    months     INTEGER NOT NULL,
+    amount     INTEGER NOT NULL,                       -- francs CFA
+    currency   VARCHAR(5) NOT NULL DEFAULT 'XOF',
+    status     VARCHAR(20) NOT NULL DEFAULT 'pending', -- pending | active | expired | cancelled
+    starts_at  TIMESTAMP,
+    ends_at    TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX idx_subscriptions_user ON subscriptions(user_id);
+
+CREATE TABLE payments (
+    id              SERIAL PRIMARY KEY,
+    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    subscription_id INTEGER NOT NULL REFERENCES subscriptions(id) ON DELETE CASCADE,
+    provider        VARCHAR(20) NOT NULL DEFAULT 'simulated',
+    provider_ref    VARCHAR(64) NOT NULL UNIQUE,
+    amount          INTEGER NOT NULL,
+    currency        VARCHAR(5) NOT NULL DEFAULT 'XOF',
+    status          VARCHAR(20) NOT NULL DEFAULT 'pending', -- pending | paid | failed | cancelled
+    failure_reason  TEXT DEFAULT '',
+    receipt_number  VARCHAR(30) UNIQUE,
+    created_at      TIMESTAMP DEFAULT NOW(),
+    paid_at         TIMESTAMP
+);
+CREATE INDEX idx_payments_user ON payments(user_id);
+
+CREATE TABLE workspaces (
+    id                SERIAL PRIMARY KEY,
+    user_id           INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    name              VARCHAR(160) NOT NULL,
+    slug              VARCHAR(80) NOT NULL UNIQUE,
+    kind              VARCHAR(20) NOT NULL,
+    plan_code         VARCHAR(40) NOT NULL,
+    storage_mb        INTEGER NOT NULL DEFAULT 0,
+    max_active_offers INTEGER,
+    created_at        TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE user_sessions (
+    id             VARCHAR(36) PRIMARY KEY,
+    user_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at     TIMESTAMP DEFAULT NOW(),
+    last_seen_at   TIMESTAMP DEFAULT NOW(),
+    expires_at     TIMESTAMP NOT NULL,
+    revoked_at     TIMESTAMP,
+    revoked_reason VARCHAR(20) DEFAULT '',
+    ip_address     VARCHAR(64) DEFAULT '',
+    user_agent     VARCHAR(255) DEFAULT ''
+);
+CREATE INDEX idx_sessions_user ON user_sessions(user_id, created_at DESC);
+
+-- Étape 7 : alertes de sécurité et verrouillage temporaire
+CREATE TABLE login_attempts (
+    id         SERIAL PRIMARY KEY,
+    identifier VARCHAR(255) NOT NULL,
+    ip_address VARCHAR(64) DEFAULT '',
+    success    BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX idx_login_attempts_ident ON login_attempts(identifier, created_at DESC);
+
+CREATE TABLE security_alerts (
+    id         SERIAL PRIMARY KEY,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind       VARCHAR(30) NOT NULL,
+    message    TEXT NOT NULL,
+    channels   VARCHAR(255) DEFAULT '',
+    ip_address VARCHAR(64) DEFAULT '',
+    user_agent VARCHAR(255) DEFAULT '',
+    created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX idx_security_alerts_user ON security_alerts(user_id, created_at DESC);
+
+CREATE TABLE alert_preferences (
+    id               SERIAL PRIMARY KEY,
+    user_id          INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    notify_email     BOOLEAN DEFAULT TRUE,
+    notify_sms       BOOLEAN DEFAULT FALSE,
+    notify_whatsapp  BOOLEAN DEFAULT FALSE,
+    notify_telegram  BOOLEAN DEFAULT FALSE,
+    phone            VARCHAR(32) DEFAULT '',
+    telegram_chat_id VARCHAR(40) DEFAULT '',
+    updated_at       TIMESTAMP DEFAULT NOW()
+);

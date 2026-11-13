@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import api from "../api";
+import api, { getRole } from "../api";
 
 export default function Chatbot() {
+  const role = getRole();
+  const endpoint = role === "candidate" || role === "company" ? "/assistant/chat" : "/assistant/public-chat";
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
@@ -17,25 +19,27 @@ export default function Chatbot() {
     setMessages((m) => [...m, { from: "me", text: msg }]);
     setBusy(true);
     try {
-      const { data } = await api.post("/assistant/chat", { message: msg });
+      const { data } = await api.post(endpoint, { message: msg });
       setMessages((m) => [...m, { from: "bot", text: data.reply }]);
       setQuick(data.quick_replies || []);
     } catch {
-      setMessages((m) => [...m, { from: "bot", text: "Désolé, l'assistant est indisponible pour le moment." }]);
+      setMessages((m) => [...m, { from: "bot", text: "Je ne parviens pas à joindre le serveur pour le moment. Réessayez dans un instant." }]);
     }
     setBusy(false);
   };
 
-  useEffect(() => { if (open && messages.length === 0) send("Bonjour"); }, [open]);
+  // changement de rôle (connexion / déconnexion) : on repart d'une conversation neuve
+  useEffect(() => { setMessages([]); setQuick([]); }, [role]);
+  useEffect(() => { if (open && messages.length === 0) send("Bonjour"); }, [open, messages.length]);
   useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, quick]);
 
   return (
     <>
-      {!open && <button className="chat-fab" onClick={() => setOpen(true)} title="Assistant IA">🤖</button>}
+      {!open && <button className="chat-fab" onClick={() => setOpen(true)} title="Discuter avec TConnect IA">🤖 <span>TConnect IA</span></button>}
       {open && (
         <div className="chat">
           <div className="chat-head">
-            <strong>🤖 Assistant TalentConnect</strong>
+            <strong>🤖 TConnect IA <small>bêta</small></strong>
             <button className="chat-close" onClick={() => setOpen(false)}>✕</button>
           </div>
           <div className="chat-body">

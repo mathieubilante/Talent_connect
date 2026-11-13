@@ -46,6 +46,32 @@ TESTER LE SITE D'EMPLOI PUBLIC (sans connexion)
 3. Connectez-vous en candidat (kofi@demo.tg) : score de compatibilite, favoris, lettre generee.
 (Si vous aviez deja des donnees : lancez 3_REINITIALISER_DONNEES.bat pour avoir les 11 offres de demonstration.)
 
+NOUVEAUTES V0.8
+- Couleurs : bouton palette en haut a droite (4 themes).
+- Connexion : mot de passe, code recu (e-mail ou telephone), Google (voir DEPLOIEMENT.md pour l'activer).
+- TConnect IA : bouton en bas a droite, visible meme sans compte.
+- Mise en ligne (Vercel + Render) : lisez DEPLOIEMENT.md.
+- Photo d'accueil facultative : frontend\public\images\hero.jpg
+
+TESTER L'ABONNEMENT (paiement de demonstration, aucun argent reel)
+1. Connectez-vous avec valide@demo.tg (candidat) ou pro@demo.tg (entreprise), mot de passe Demo1234!
+2. Menu "Mon espace" > Abonnement : choisissez une duree et une offre, puis Payer.
+3. Un recu s'affiche, le compte devient Actif et un espace dedie est cree.
+4. "Simuler un echec" montre le cas d'un paiement refuse.
+
+TESTER LES SESSIONS
+- Connectez-vous avec le meme compte dans deux navigateurs : le premier est deconnecte avec un message.
+- Sans activite, un avertissement apparait puis la deconnexion automatique (30 min par defaut).
+
+INSTALLER LE SITE COMME APPLICATION : voir DEPLOIEMENT.md (disponible sur le site publie en HTTPS).
+
+TESTER LES ALERTES DE SECURITE
+1. Connectez-vous en candidat (kofi@demo.tg) dans Chrome, puis dans un autre navigateur (Edge/Firefox) : alerte "nouvelle connexion" + "session fermee" (menu > Securite).
+2. Tapez 5 fois un mauvais mot de passe : alerte a la 3e erreur, verrouillage a la 5e. En administrateur : carte Securite > Debloquer.
+3. Menu Securite > "Ou recevoir mes alertes" > "Envoyer une alerte de test" (mode demo : visible dans l'application et la fenetre noire API).
+
+ADMINISTRATEUR : voir GUIDE_ADMINISTRATEUR.md
+
 SI QUELQUE CHOSE NE MARCHE PAS
 - "Python n'est pas installe" : installez Python et cochez "Add Python to PATH".
 - Page blanche ou erreur : regardez la fenetre noire concernee et copiez le message.

@@ -1,0 +1,48 @@
+# Déploiement de l'API sur Render (gratuit) : voir DEPLOIEMENT.md
+databases:
+  - name: talentconnect-db
+    plan: free
+    databaseName: talentconnect
+    user: talentconnect
+
+services:
+  - type: web
+    name: talentconnect-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: talentconnect-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS            # adresse de votre site Vercel, ex. https://talentconnect-bm.vercel.app
+        sync: false
+      - key: KYC_ENCRYPTION_KEY      # à générer une fois (voir DEPLOIEMENT.md)
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: GOOGLE_CLIENT_ID        # facultatif : bouton « Continuer avec Google »
+        sync: false
+      - key: OTP_DEV_MODE            # "true" : le code OTP s'affiche aussi sur le site (démonstration)
+        value: "true"
+      - key: SEED_DEMO_DATA          # crée les comptes et offres de démonstration au démarrage
+        value: "true"
+      - key: PAYMENT_PROVIDER        # "simulated" : paiement de démonstration (aucun argent réel)
+        value: "simulated"
+      - key: SESSION_IDLE_MINUTES    # déconnexion automatique après inactivité
+        value: "30"
+      - key: TELEGRAM_BOT_TOKEN      # facultatif : alertes Telegram
+        sync: false
+      - key: TWILIO_ACCOUNT_SID      # facultatif : alertes SMS et WhatsApp
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_SMS_FROM
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        sync: false

@@ -1,0 +1,22 @@
+{
+  "name": "TalentConnect – Emplois et stages",
+  "short_name": "TalentConnect",
+  "description": "Trouvez un emploi ou un stage, postulez en un clic et suivez vos candidatures.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f1f8f6",
+  "theme_color": "#0f766e",
+  "lang": "fr",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Offres d'emploi", "url": "/offers?offer_type=emploi", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Offres de stage", "url": "/offers?offer_type=stage", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Mon abonnement", "url": "/billing", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

@@ -6,6 +6,8 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
+from ..accounts import get_or_create_account
+from ..billing_rules import offer_limit
 from ..database import get_db
 from ..matching import analyze_match
 from ..security import get_current_user, require_role
@@ -69,6 +71,10 @@ def list_offers(q: Optional[str] = None, offer_type: Optional[models.OfferType] 
 def create_offer(data: schemas.OfferCreate,
                  user: models.User = Depends(require_role(models.Role.company)),
                  db: Session = Depends(get_db)):
+    limit = offer_limit(get_or_create_account(db, user).status, "company")
+    if limit is not None and sum(1 for o in user.company.offers if o.is_active) >= limit:
+        raise HTTPException(403, f"OFFER_LIMIT: Pendant l'essai, vous pouvez avoir {limit} offres actives. "
+                                 "Souscrivez un abonnement pour en publier davantage.")
     offer = models.JobOffer(company_id=user.company.id, **data.model_dump())
     db.add(offer)
     db.commit()

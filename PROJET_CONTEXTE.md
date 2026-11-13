@@ -33,9 +33,9 @@ users, candidates, companies, job_offers, applications, favorites, notifications
 2. Inscription e-mail/téléphone + code OTP : **FAIT (étape 2)**
 3. Documents KYC (CIN ; entreprises : CIN représentant, patente, extrait RNE < 3 mois), stockage chiffré : **FAIT (étape 3)**
 4. Validation/refus administrateur : **FAIT (étape 4)**
-5. Abonnement, paiement, activation, création de l'environnement : à faire
-6. Une seule session active, déconnexion après inactivité, gestion sécurisée des jetons : à faire
-7. Alertes de sécurité (e-mail, SMS, WhatsApp, Telegram), détection de comportements suspects : à faire
+5. Abonnement, paiement, activation, création de l'environnement : **FAIT (étape 5, paiement simulé)**
+6. Une seule session active, déconnexion après inactivité, gestion sécurisée des jetons : **FAIT (étape 6)** ; reste « comportements suspects » (étape 7)
+7. Alertes de sécurité (e-mail, SMS, WhatsApp, Telegram), détection de comportements suspects : **FAIT (étape 7)**
 8. Passage essai -> actif sans perte de données, tests, déploiement : à faire
 
 ## Règles de l'étape 1 (implémentées)
@@ -78,6 +78,28 @@ users, candidates, companies, job_offers, applications, favorites, notifications
 - Candidat connecté : mêmes pages avec score de compatibilité, favoris, lettre de motivation générée ; pagination côté client (le tri par score est calculé à la volée). « Postuler » pour un visiteur renvoie vers la connexion puis revient à l'offre (`?next=`).
 - Frontend : utils.js (dates relatives, logos à initiales), components Navbar/SiteFooter/SearchBar/Pagination/OfferCard/ApplyModal/CompanyLogo ; pages Home, Offers, OfferDetail, Companies, CompanyProfile. Les pages privées gardent leurs routes.
 - Pas de salaire ni de durée dans les offres (nécessiterait de modifier la table job_offers : à faire avec Alembic).
+
+## Version 0.8 : connexions multiples, TConnect IA, thèmes, mise en ligne
+- Méthodes de connexion : e-mail ou téléphone + mot de passe ; **code OTP sans mot de passe** (`POST /auth/otp/request` puis `/auth/otp/login`) ; **Google** (`POST /auth/google`, jeton vérifié par `google-auth` : signature, expiration, audience = GOOGLE_CLIENT_ID, e-mail vérifié). `GET /auth/config` renvoie l'identifiant Google : le bouton n'apparaît que s'il est configuré. Les admins ne peuvent pas se connecter par Google ni par code. Compte Google inconnu : création du compte avec le rôle choisi, e-mail marqué vérifié.
+- **TConnect IA** (nom du chatbot, bêta) : visible pour TOUS sauf admin. Connecté → `/assistant/chat` (contextuel) ; visiteur → `/assistant/public-chat` (explications générales : inscription, score, essai gratuit, documents, recruteurs). Règles dans `assistant_logic.py` (`_reply_visitor`).
+- Design : 4 thèmes (émeraude par défaut, océan, violet, rose) via variables CSS + sélecteur 🎨 (mémorisé dans localStorage) ; illustrations SVG animées (`Illustrations.jsx`) ; contenu concret à la place du texte marketing ; photo d'accueil facultative `frontend/public/images/hero.jpg`.
+- **Mise en ligne** : site sur Vercel (Root Directory = frontend, variable `VITE_API_URL`), API sur Render via `render.yaml` (Docker, PostgreSQL). Voir `DEPLOIEMENT.md`. Sans `VITE_API_URL` en ligne, le site affiche un bandeau rouge (cause de l'erreur « Une erreur est survenue » à l'inscription). `vercel.json` réécrit toutes les routes vers index.html. Config backend : `CORS_ORIGINS` (liste), `DATABASE_URL` (postgres:// converti), `GOOGLE_CLIENT_ID`, `SEED_DEMO_DATA`, `OTP_DEV_MODE`, `KYC_ENCRYPTION_KEY`, `ADMIN_PASSWORD`, `PORT`.
+- Limites connues sur hébergement gratuit : veille de l'API (premier appel lent), documents KYC sur disque éphémère, base Render gratuite limitée à 30 jours, SMS non branchés (OTP affiché si OTP_DEV_MODE=true).
+
+## Étapes 5 et 6 + application installable (version 0.9)
+- **Abonnement et paiement** : `pricing.py` (offres `candidat_premium` 2 000 FCFA/mois et `entreprise_pro` 15 000 FCFA/mois, remises 5/10/20 % sur 3/6/12 mois : tarifs de démonstration à confirmer), `billing_rules.py` (règles pures), `billing.py` (devis, paiement, activation, expiration), `routers/billing.py`. Flux : compte `validated` → `POST /billing/checkout` (prix calculé par le serveur, jamais par le navigateur) → paiement **simulé** `POST /billing/payments/{id}/simulate` → compte `active`, abonnement avec dates, **espace dédié** (`workspaces`), reçu `REC-AAAA-NNNNNN`, notification. Un paiement ne peut être traité qu'une fois (verrou atomique). Renouvellement : la nouvelle période prolonge la précédente. Un abonnement échu remet le compte à `validated` (jamais pour un compte activé manuellement sans abonnement).
+- **Restriction levée à l'activation** : en essai/validé, une entreprise ne peut avoir que 3 offres actives (`OFFER_LIMIT`) ; l'abonnement Pro autorise 50 offres. Fin des 30 connexions d'essai.
+- **Sessions** : table `user_sessions` ; le jeton JWT contient `sid`. Une nouvelle connexion ferme la précédente (`SESSION_REVOKED`), inactivité de 30 min (`SESSION_IDLE`), durée max 12 h (`SESSION_EXPIRED`), `POST /auth/logout` ferme la session côté serveur. Côté site : `IdleGuard` (avertissement 60 s avant, signal d'activité toutes les 4 min), message sur la page de connexion. Règles dans `session_rules.py` ; paramètres `SESSION_IDLE_MINUTES`, `SESSION_MAX_HOURS`.
+- **PWA** : `manifest.webmanifest`, `sw.js` (cache de la coquille, jamais l'API), `offline.html`, icônes, bouton d'installation (`PwaTools.jsx`), bandeau hors ligne. Service worker enregistré en production seulement.
+- Pas encore fait : vrai fournisseur de paiement, alertes de sécurité (e-mail/SMS/WhatsApp/Telegram), détection de comportements suspects, limitation des tentatives de connexion (étape 7), stockage permanent des documents.
+- Comptes de démonstration prêts à s'abonner : `valide@demo.tg` (candidat), `pro@demo.tg` (entreprise).
+
+## Étape 7 : alertes de sécurité (version 0.10)
+- `security_rules.py` (règles pures) : verrouillage après 5 échecs de mot de passe en 15 min (par identifiant, 15 min, la connexion par code reste possible), alerte au propriétaire dès 3 échecs, détection de **nouvel appareil** (réseau + navigateur inconnus ; la 1re connexion ne déclenche rien), **activité suspecte** (3 réseaux différents en 10 min), **session remplacée**. Messages d'alerte en français, IP masquée.
+- `security_monitor.py` (accès base) branché dans `routers/auth.py` (`check_not_locked`, `record_attempt`, `after_login`) ; `alerts.py` envoie sur les canaux choisis ; anti-spam (même alerte au plus 1 fois / 15-60 min) ; `alert_channels.py` : SMS et WhatsApp via Twilio, Telegram via Bot API (HTTP, sans bibliothèque) ; e-mail via `delivery.send_email_message`. **Sans identifiants : mode démo** (message dans l'application et les journaux).
+- Tables : `login_attempts`, `security_alerts`, `alert_preferences`. Routes : `/security/alerts`, `/security/preferences`, `/security/test-alert`, `/admin/security` (+ `/unlock`). Page « Sécurité » côté utilisateur ; carte « Sécurité » côté administrateur.
+- Limites : les identifiants SMS/WhatsApp/Telegram ne sont pas testés avec de vrais comptes ; l'adresse IP vient de l'en-tête X-Forwarded-For (indicative, falsifiable) donc le verrouillage repose sur l'identifiant et non sur l'IP ; l'administrateur peut aussi être verrouillé (pas de connexion par code pour lui).
+- `ADMIN_PASSWORD` défini = devient le mot de passe de l'administrateur au démarrage (rotation possible). Voir GUIDE_ADMINISTRATEUR.md.
 
 ## Comptes de démonstration (python -m app.seed, mot de passe Demo1234!)
 Entreprises : tech@demo.tg, agri@demo.tg, finance@demo.tg · Candidats actifs : kofi@, ama@, yao@, afi@demo.tg

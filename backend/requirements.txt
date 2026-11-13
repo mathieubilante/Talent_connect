@@ -12,3 +12,5 @@ pytest
 httpx
 python-dotenv
 cryptography
+google-auth
+requests

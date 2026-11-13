@@ -9,3 +9,4 @@ backend/uploads/*
 !backend/uploads/.gitkeep
 dist/
 backend/uploads/kyc/
+.vercel/

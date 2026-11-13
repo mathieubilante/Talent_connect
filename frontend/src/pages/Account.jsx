@@ -24,7 +24,7 @@ export default function Account() {
     { label: "Documents d'identité envoyés", done: !!docsDone, link: "/kyc" },
     { label: "Validation par l'administration", done: info.status === "validated" || info.status === "active",
       failed: info.status === "rejected", hint: docsApproved ? "documents validés" : "" },
-    { label: "Abonnement et paiement", done: info.status === "active", soon: info.status !== "active" },
+    { label: "Abonnement et paiement", done: info.status === "active", link: info.status === "validated" ? "/billing" : null },
   ];
   const current = steps.findIndex((st) => !st.done);
   const pct = Math.min(100, Math.round((info.trial_logins_used / info.trial_limit) * 100));
@@ -50,7 +50,7 @@ export default function Account() {
             </li>))}
         </ol>
         {info.status === "rejected" && <p className="error">{info.message}</p>}
-        {info.status === "validated" && <p className="info">Votre compte est validé. Il reste à souscrire un abonnement pour l'activer complètement.</p>}
+        {info.status === "validated" && <p className="info">Votre compte est validé. Il reste à souscrire un abonnement pour l'activer complètement. <Link to="/billing" className="link">Choisir un abonnement →</Link></p>}
       </div>
 
       {info.status !== "active" && info.status !== "rejected" && (

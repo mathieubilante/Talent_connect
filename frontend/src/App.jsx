@@ -1,11 +1,16 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { getRole } from "./api";
+import { apiMisconfigured, getRole } from "./api";
 import Chatbot from "./components/Chatbot.jsx";
+import IdleGuard from "./components/IdleGuard.jsx";
+import { OfflineBanner } from "./components/PwaTools.jsx";
 import Navbar from "./components/Navbar.jsx";
 import SiteFooter from "./components/SiteFooter.jsx";
 import TrialBanner from "./components/TrialBanner.jsx";
 import Account from "./pages/Account.jsx";
 import Admin from "./pages/Admin.jsx";
+import Billing from "./pages/Billing.jsx";
+import Receipt from "./pages/Receipt.jsx";
+import Security from "./pages/Security.jsx";
 import CandidateSpace from "./pages/CandidateSpace.jsx";
 import Companies from "./pages/Companies.jsx";
 import CompanyProfile from "./pages/CompanyProfile.jsx";
@@ -31,6 +36,14 @@ export default function App() {
   return (
     <>
       <Navbar />
+      <OfflineBanner />
+      {role && <IdleGuard />}
+      {apiMisconfigured && (
+        <div className="api-warning">
+          ⚠️ Le serveur (API) n'est pas configuré pour ce site : l'inscription et la connexion ne peuvent pas fonctionner.
+          Ajoutez la variable <b>VITE_API_URL</b> dans Vercel puis redéployez (voir DEPLOIEMENT.md).
+        </div>
+      )}
       <main className="container">
         {(role === "candidate" || role === "company") && <TrialBanner />}
         <Routes>
@@ -41,6 +54,9 @@ export default function App() {
           <Route path="/companies" element={<Companies />} />
           <Route path="/companies/:id" element={<CompanyProfile />} />
           <Route path="/notifications" element={<Private><Notifications /></Private>} />
+          <Route path="/billing" element={<Private><Billing /></Private>} />
+          <Route path="/billing/receipt/:id" element={<Private><Receipt /></Private>} />
+          <Route path="/security" element={<Private><Security /></Private>} />
           <Route path="/kyc" element={<Private><Kyc /></Private>} />
           <Route path="/account" element={<Private><Account /></Private>} />
           <Route path="/candidate" element={<Private role="candidate"><CandidateSpace /></Private>} />
@@ -49,7 +65,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      {(role === "candidate" || role === "company") && <Chatbot />}
+      {role !== "admin" && <Chatbot />}
       <SiteFooter />
     </>
   );

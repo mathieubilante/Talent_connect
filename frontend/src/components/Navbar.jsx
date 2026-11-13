@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import api, { clearSession, getRole } from "../api";
+import api, { getRole, serverLogout } from "../api";
+import { InstallButton } from "./PwaTools.jsx";
+import ThemeSwitcher from "./ThemeSwitcher.jsx";
 
 const MENU = {
-  candidate: [["/candidate", "Mon espace"], ["/kyc", "Mes documents"], ["/account", "Mon compte"], ["/notifications", "Notifications"]],
-  company: [["/company", "Espace entreprise"], ["/kyc", "Mes documents"], ["/account", "Mon compte"], ["/notifications", "Notifications"]],
+  candidate: [["/candidate", "Mon espace"], ["/billing", "Abonnement"], ["/kyc", "Mes documents"], ["/security", "Sécurité"], ["/account", "Mon compte"], ["/notifications", "Notifications"]],
+  company: [["/company", "Espace entreprise"], ["/billing", "Abonnement"], ["/kyc", "Mes documents"], ["/security", "Sécurité"], ["/account", "Mon compte"], ["/notifications", "Notifications"]],
   admin: [["/admin", "Administration"], ["/notifications", "Notifications"]],
 };
 
@@ -23,7 +25,7 @@ export default function Navbar() {
     api.get("/notifications").then((r) => setUnread(r.data.unread)).catch(() => {});
   }, [pathname, role]);
 
-  const logout = () => { clearSession(); setMenu(false); navigate("/"); };
+  const logout = async () => { await serverLogout(); setMenu(false); navigate("/"); };
   const current = pathname + search;
   const cls = (to) => (current === to || (to === "/companies" && pathname.startsWith("/companies")) ? "active" : "");
 
@@ -40,6 +42,8 @@ export default function Navbar() {
           {!role && <Link to="/login?mode=register&role=company" className="recruit">Espace recruteurs</Link>}
         </nav>
         <div className={`actions ${open ? "open" : ""}`}>
+          <InstallButton />
+          <ThemeSwitcher />
           {!role && (
             <>
               <Link to="/login" className="btn-outline">Connexion</Link>

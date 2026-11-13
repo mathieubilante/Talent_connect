@@ -94,11 +94,27 @@ def run() -> None:
             db.flush()
             acc = get_or_create_account(db, u)
             acc.trial_logins_used = 27
+        # comptes « validés » : documents acceptés, prêts à souscrire un abonnement (démonstration du paiement)
+        for email, role in (("valide@demo.tg", "candidate"), ("pro@demo.tg", "company")):
+            if db.query(models.User).filter_by(email=email).first():
+                continue
+            u = models.User(email=email, password_hash=hash_password(PASSWORD), role=models.Role(role))
+            db.add(u); db.flush()
+            if role == "candidate":
+                db.add(models.Candidate(user_id=u.id, first_name="Compte", last_name="Valide",
+                                        education="Licence Informatique", skills="python, sql, react"))
+            else:
+                db.add(models.Company(user_id=u.id, name="Entreprise Valide SARL", sector="Services", city="Lomé",
+                                      description="Entreprise de démonstration : compte validé, prêt à s'abonner."))
+            db.flush()
+            acc = get_or_create_account(db, u)
+            acc.status, acc.trial_logins_used = "validated", 5
         db.commit()
         print(f"Données de démonstration créées. Mot de passe de tous les comptes : {PASSWORD}")
         print("Entreprises : tech@demo.tg, agri@demo.tg, finance@demo.tg")
         print("Candidats   : kofi@demo.tg, ama@demo.tg, yao@demo.tg, afi@demo.tg (comptes actifs)")
         print("Essai gratuit : essai@demo.tg (27 connexions utilisées sur 30, pour la démonstration)")
+        print("Prêts à s'abonner (compte validé) : valide@demo.tg (candidat), pro@demo.tg (entreprise)")
     finally:
         db.close()
 

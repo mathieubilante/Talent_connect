@@ -197,3 +197,96 @@ class KycAccessLog(Base):
     doc_type = Column(String(30), default="")
     ip_address = Column(String(64), default="")
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    plan_code = Column(String(40), nullable=False)
+    months = Column(Integer, nullable=False)
+    amount = Column(Integer, nullable=False)                  # montant total en francs CFA
+    currency = Column(String(5), nullable=False, default="XOF")
+    status = Column(String(20), nullable=False, default="pending")   # pending | active | expired | cancelled
+    starts_at = Column(DateTime, nullable=True)
+    ends_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Payment(Base):
+    __tablename__ = "payments"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    subscription_id = Column(Integer, ForeignKey("subscriptions.id"), nullable=False)
+    provider = Column(String(20), nullable=False, default="simulated")
+    provider_ref = Column(String(64), unique=True, nullable=False)
+    amount = Column(Integer, nullable=False)
+    currency = Column(String(5), nullable=False, default="XOF")
+    status = Column(String(20), nullable=False, default="pending")   # pending | paid | failed | cancelled
+    failure_reason = Column(Text, default="")
+    receipt_number = Column(String(30), unique=True, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    paid_at = Column(DateTime, nullable=True)
+
+
+class Workspace(Base):
+    """Environnement dédié créé automatiquement à l'activation du compte."""
+    __tablename__ = "workspaces"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    name = Column(String(160), nullable=False)
+    slug = Column(String(80), unique=True, nullable=False)
+    kind = Column(String(20), nullable=False)                 # candidate | company
+    plan_code = Column(String(40), nullable=False)
+    storage_mb = Column(Integer, nullable=False, default=0)
+    max_active_offers = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class UserSession(Base):
+    """Une seule session active par utilisateur : une nouvelle connexion ferme la précédente."""
+    __tablename__ = "user_sessions"
+    id = Column(String(36), primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_seen_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    revoked_at = Column(DateTime, nullable=True)
+    revoked_reason = Column(String(20), default="")           # new_login | logout
+    ip_address = Column(String(64), default="")
+    user_agent = Column(String(255), default="")
+
+
+class LoginAttempt(Base):
+    """Tentatives de connexion par mot de passe (réussies ou non), pour le verrouillage temporaire."""
+    __tablename__ = "login_attempts"
+    id = Column(Integer, primary_key=True)
+    identifier = Column(String(255), nullable=False, index=True)
+    ip_address = Column(String(64), default="")
+    success = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
+class SecurityAlert(Base):
+    __tablename__ = "security_alerts"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    kind = Column(String(30), nullable=False)
+    message = Column(Text, nullable=False)
+    channels = Column(String(255), default="")          # ex. "app,email:console,telegram:sent"
+    ip_address = Column(String(64), default="")
+    user_agent = Column(String(255), default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class AlertPreference(Base):
+    __tablename__ = "alert_preferences"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    notify_email = Column(Boolean, default=True)
+    notify_sms = Column(Boolean, default=False)
+    notify_whatsapp = Column(Boolean, default=False)
+    notify_telegram = Column(Boolean, default=False)
+    phone = Column(String(32), default="")
+    telegram_chat_id = Column(String(40), default="")
+    updated_at = Column(DateTime, default=datetime.utcnow)

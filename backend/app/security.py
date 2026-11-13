@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Optional
 
 import bcrypt
 import jwt
@@ -9,8 +10,10 @@ from sqlalchemy.orm import Session
 from . import models
 from .account_rules import trial_info
 from .accounts import account_payload, get_or_create_account
-from .config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY
+from .billing import refresh_subscription
+from .config import ALGORITHM, SECRET_KEY, SESSION_MAX_HOURS
 from .database import get_db
+from .sessions import validate_session
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -23,10 +26,18 @@ def verify_password(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
 
-def create_access_token(user_id: int, role: str) -> str:
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    return jwt.encode({"sub": str(user_id), "role": role, "exp": expire},
+def create_access_token(user_id: int, role: str, sid: str) -> str:
+    """Jeton signé qui contient l'identifiant de la session (sid) : fermer la session invalide le jeton."""
+    expire = datetime.utcnow() + timedelta(hours=SESSION_MAX_HOURS)
+    return jwt.encode({"sub": str(user_id), "role": role, "sid": sid, "exp": expire},
                       SECRET_KEY, algorithm=ALGORITHM)
+
+
+def current_sid(token: str) -> Optional[str]:
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]).get("sid")
+    except jwt.PyJWTError:
+        return None
 
 
 def get_user_unrestricted(token: str = Depends(oauth2_scheme),
@@ -42,6 +53,10 @@ def get_user_unrestricted(token: str = Depends(oauth2_scheme),
         raise error
     if not user:
         raise error
+    sid = payload.get("sid")
+    if not sid:                       # jeton sans session (ancien format) : reconnexion nécessaire
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "SESSION_REVOKED: Reconnectez-vous.")
+    validate_session(db, sid, user.id)   # fermée, expirée ou inactive : 401
     return user
 
 
@@ -60,6 +75,8 @@ def get_current_user(user: models.User = Depends(get_user_unrestricted),
     if acc.last_activity_at is None or (now - acc.last_activity_at).total_seconds() > 60:
         acc.last_activity_at = now
         db.commit()
+        if acc.status == "active":
+            refresh_subscription(db, user)      # un abonnement échu remet le compte à « validé »
     return user
 
 

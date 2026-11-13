@@ -52,3 +52,12 @@ def cover_letter(data: schemas.CoverLetterIn,
     text = generate_cover_letter(f"{c.first_name} {c.last_name}".strip(), c.education,
                                  offer.title, offer.company.name, a["matched"], a["missing"])
     return {"letter": text}
+
+
+@router.post("/public-chat", response_model=schemas.ChatOut)
+def public_chat(data: schemas.ChatIn, db: Session = Depends(get_db)):
+    """TConnect IA pour les visiteurs non connectés : explications générales, aucune donnée personnelle."""
+    latest = (db.query(models.JobOffer).filter_by(is_active=True)
+              .order_by(models.JobOffer.created_at.desc()).limit(3).all())
+    ctx = {"latest_offers": [{"title": o.title, "company": o.company.name} for o in latest]}
+    return reply(data.message[:500], "visitor", ctx)
