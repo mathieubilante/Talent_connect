@@ -10,3 +10,4 @@ backend/uploads/*
 dist/
 backend/uploads/kyc/
 .vercel/
+backend/sauvegardes/

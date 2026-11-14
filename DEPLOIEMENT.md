@@ -79,3 +79,22 @@ Après 5 échecs de mot de passe en 15 minutes, le compte est verrouillé 15 min
 ## Mot de passe de l'administrateur
 L'adresse est `admin@talentconnect.tg`. Définissez la variable `ADMIN_PASSWORD` sur Render : le mot de passe est appliqué au prochain démarrage,
 même si l'administrateur existe déjà. **Ne gardez jamais le mot de passe par défaut** (il est public dans le code).
+
+
+---
+
+## Étape 8 : liste de contrôle avant la mise en production
+Au démarrage, l'API affiche dans ses journaux (Render > Logs) des lignes `[SÉCURITÉ]` pour chaque réglage dangereux. Visez zéro avertissement.
+- [ ] `SECRET_KEY` : longue et secrète (Render la génère avec `render.yaml`).
+- [ ] `ADMIN_PASSWORD` : défini et solide.
+- [ ] `KYC_ENCRYPTION_KEY` : définie **et sauvegardée ailleurs** (sans elle, les documents chiffrés sont perdus).
+- [ ] `CORS_ORIGINS` : l'adresse exacte du site Vercel.
+- [ ] Base **PostgreSQL** (pas SQLite) ; `DATABASE_URL` renseignée.
+- [ ] `OTP_DEV_MODE=false` : **seulement** quand l'envoi réel des codes fonctionne (SMTP pour l'e-mail ; sinon personne ne recevra de code et l'inscription sera impossible).
+- [ ] `PAYMENT_PROVIDER` : « simulated » tant qu'aucun vrai moyen de paiement n'est branché ; ne pas présenter le site comme payant en réel.
+- [ ] Contrôle de santé : `https://VOTRE-API.onrender.com/health` doit afficher `{"status":"ok","database":"ok"}`.
+- [ ] Sauvegardes : `4_SAUVEGARDER.bat` (local) ou `python -m tools.backup` ; sur Render, activez aussi les sauvegardes de la base.
+
+## Tests automatiques
+- Sur votre PC : double-clic sur `5_TESTER.bat` (ou `python -m pytest` dans `backend`). Les tests d'intégration créent une base temporaire : vos données ne sont pas touchées.
+- Sur GitHub : le fichier `.github/workflows/tests.yml` lance les tests de l'API et la compilation du site à chaque `git push` (onglet **Actions** du dépôt). Une pastille verte = tout fonctionne.

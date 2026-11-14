@@ -1,12 +1,16 @@
-from fastapi import FastAPI
+import os
+
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import models
-from .config import ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_PASSWORD_FROM_ENV, CORS_ORIGINS, SEED_DEMO_DATA
+from .config import (ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_PASSWORD_FROM_ENV, CORS_ORIGINS, DATABASE_URL,
+                     KYC_ENCRYPTION_KEY, OTP_DEV_MODE, SECRET_KEY, SEED_DEMO_DATA)
 from .database import Base, SessionLocal, engine
 from .routers import (account, admin, applications, assistant, auth, billing, favorites, kyc,
                       notifications, offers, profiles, public, recommendations, security_center)
 from .security import hash_password, verify_password
+from .startup_checks import collect_warnings
 
 Base.metadata.create_all(bind=engine)
 
@@ -26,14 +30,14 @@ def ensure_admin() -> None:
             admin.password_hash = hash_password(ADMIN_PASSWORD)
             db.commit()
             print("[SÉCURITÉ] Mot de passe administrateur mis à jour depuis ADMIN_PASSWORD.", flush=True)
-        if not ADMIN_PASSWORD_FROM_ENV:
-            print("[SÉCURITÉ] ATTENTION : ADMIN_PASSWORD n'est pas défini, le mot de passe par défaut (public) est utilisé. "
-                  "Définissez ADMIN_PASSWORD sur l'hébergeur.", flush=True)
     finally:
         db.close()
 
 
 ensure_admin()
+for _w in collect_warnings(SECRET_KEY, ADMIN_PASSWORD_FROM_ENV, KYC_ENCRYPTION_KEY, OTP_DEV_MODE, CORS_ORIGINS,
+                          DATABASE_URL, hosted=bool(os.getenv("RENDER"))):
+    print(f"[SÉCURITÉ] {_w}", flush=True)
 
 if SEED_DEMO_DATA:
     from . import seed
@@ -41,7 +45,7 @@ if SEED_DEMO_DATA:
 
 app = FastAPI(title="TalentConnect API",
               description="Plateforme intelligente de recrutement, d'emploi et de gestion des stages",
-              version="0.10.0")
+              version="0.11.0")
 
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
@@ -56,4 +60,18 @@ app.include_router(security_center.admin_router)
 
 @app.get("/", tags=["Santé"])
 def root():
-    return {"app": "TalentConnect API", "version": "0.10.0", "status": "ok", "docs": "/docs"}
+    return {"app": "TalentConnect API", "version": "0.11.0", "status": "ok", "docs": "/docs"}
+
+
+@app.get("/health", tags=["Santé"])
+def health():
+    """Contrôle de santé : l'API répond ET la base de données est joignable."""
+    from sqlalchemy import text
+    db = SessionLocal()
+    try:
+        db.execute(text("SELECT 1"))
+        return {"status": "ok", "database": "ok"}
+    except Exception:
+        raise HTTPException(503, "Base de données injoignable")
+    finally:
+        db.close()

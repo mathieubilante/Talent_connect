@@ -36,7 +36,7 @@ users, candidates, companies, job_offers, applications, favorites, notifications
 5. Abonnement, paiement, activation, création de l'environnement : **FAIT (étape 5, paiement simulé)**
 6. Une seule session active, déconnexion après inactivité, gestion sécurisée des jetons : **FAIT (étape 6)** ; reste « comportements suspects » (étape 7)
 7. Alertes de sécurité (e-mail, SMS, WhatsApp, Telegram), détection de comportements suspects : **FAIT (étape 7)**
-8. Passage essai -> actif sans perte de données, tests, déploiement : à faire
+8. Passage essai -> actif sans perte de données, tests, déploiement : **FAIT (étape 8)** ; tests d'intégration à exécuter (voir ci-dessous)
 
 ## Règles de l'étape 1 (implémentées)
 - Compteur `trial_logins_used` dans `user_accounts`, incrémenté par un UPDATE atomique côté base (condition `< trial_limit`) : non contournable par déconnexion, autre appareil ou autre navigateur.
@@ -100,6 +100,12 @@ users, candidates, companies, job_offers, applications, favorites, notifications
 - Tables : `login_attempts`, `security_alerts`, `alert_preferences`. Routes : `/security/alerts`, `/security/preferences`, `/security/test-alert`, `/admin/security` (+ `/unlock`). Page « Sécurité » côté utilisateur ; carte « Sécurité » côté administrateur.
 - Limites : les identifiants SMS/WhatsApp/Telegram ne sont pas testés avec de vrais comptes ; l'adresse IP vient de l'en-tête X-Forwarded-For (indicative, falsifiable) donc le verrouillage repose sur l'identifiant et non sur l'IP ; l'administrateur peut aussi être verrouillé (pas de connexion par code pour lui).
 - `ADMIN_PASSWORD` défini = devient le mot de passe de l'administrateur au démarrage (rotation possible). Voir GUIDE_ADMINISTRATEUR.md.
+
+## Étape 8 : tests d'intégration, passage essai → actif, déploiement (version 0.11)
+- **Tests d'intégration** (`backend/tests/test_api_*.py`, `conftest.py`, `tests/helpers.py`) : TestClient FastAPI sur une base SQLite temporaire (variables définies avant l'import). Couvrent : inscription OTP, mauvais codes, connexion par code, téléphone, essai de 30 connexions et blocage, session unique/déconnexion, Google non configuré, documents chiffrés sur le disque et accès contrôlé, extrait RNE trop ancien, validation/refus administratif, devis non falsifiable, paiement/échec/double paiement, expiration et renouvellement, limite de 3 offres en essai, **passage de l'essai au compte actif sans perte de données** (profil, candidature, score, favoris conservés), alertes, verrouillage, déblocage, préférences, routes admin, routes publiques, assistant public, `/health`.
+- `GET /health` : vérifie l'API et la base. `startup_checks.py` : avertissements `[SÉCURITÉ]` au démarrage (SECRET_KEY, ADMIN_PASSWORD, clé KYC, OTP_DEV_MODE, CORS, SQLite hébergé).
+- `tools/backup.py` + `4_SAUVEGARDER.bat` : sauvegarde de la base et des documents chiffrés. `5_TESTER.bat` : lance les tests. `.github/workflows/tests.yml` : tests de l'API + compilation du site à chaque push.
+- **Statut honnête** : les tests d'intégration ont été écrits mais PAS exécutés dans l'environnement de rédaction (pas de FastAPI installé ni d'accès réseau) : première exécution à faire (5_TESTER.bat ou GitHub Actions) ; des ajustements mineurs sont possibles.
 
 ## Comptes de démonstration (python -m app.seed, mot de passe Demo1234!)
 Entreprises : tech@demo.tg, agri@demo.tg, finance@demo.tg · Candidats actifs : kofi@, ama@, yao@, afi@demo.tg
