@@ -46,7 +46,7 @@ if SEED_DEMO_DATA:
 
 app = FastAPI(title="TalentConnect API",
               description="Plateforme intelligente de recrutement, d'emploi et de gestion des stages",
-              version="0.13.0")
+              version="0.16.0")
 
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
@@ -68,7 +68,7 @@ app.include_router(security_center.admin_router)
 
 @app.get("/", tags=["Santé"])
 def root():
-    return {"app": "TalentConnect API", "version": "0.13.0", "status": "ok", "docs": "/docs"}
+    return {"app": "TalentConnect API", "version": "0.16.0", "status": "ok", "docs": "/docs"}
 
 
 @app.get("/health", tags=["Santé"])

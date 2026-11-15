@@ -60,3 +60,8 @@ TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "").strip()
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "").strip()
 TWILIO_SMS_FROM = os.getenv("TWILIO_SMS_FROM", "").strip()                 # numéro ou nom d'expéditeur SMS
 TWILIO_WHATSAPP_FROM = os.getenv("TWILIO_WHATSAPP_FROM", "").strip()       # ex. +14155238886 (sandbox WhatsApp Twilio)
+
+# --- Envoi d'e-mails par API (recommandé sur Render : le SMTP sortant est bloqué sur l'offre gratuite) ---
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "").strip()
+BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL", "").strip()     # adresse validée dans Brevo
+BREVO_SENDER_NAME = os.getenv("BREVO_SENDER_NAME", "TalentConnect").strip()

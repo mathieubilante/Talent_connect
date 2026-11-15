@@ -279,3 +279,13 @@ class AlertPrefsIn(BaseModel):
 
 class UnlockIn(BaseModel):
     identifier: str
+
+
+class PasswordRequestIn(BaseModel):
+    identifier: str
+
+
+class PasswordResetIn(BaseModel):
+    identifier: str
+    code: str = Field(min_length=4, max_length=10)
+    new_password: str = Field(min_length=8)

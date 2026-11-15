@@ -32,6 +32,12 @@ def create_and_send_otp(db: Session, user: models.User, channel: str, destinatio
                           max_attempts=MAX_ATTEMPTS))
     db.commit()
     delivery = deliver_otp(channel, destination, code)
+    if delivery == "console" and not OTP_DEV_MODE:
+        # Aucun envoi réel : on ne prétend pas que le message est parti
+        raise HTTPException(503, "L'envoi des codes n'est pas configuré sur ce serveur. Contactez l'administration.")
+    if delivery == "failed":
+        # On ne prétend pas que le code est parti s'il n'est pas parti
+        raise HTTPException(503, "Nous n'avons pas pu envoyer le code. Vérifiez l'adresse et réessayez dans quelques minutes.")
     return {"delivery": delivery, "expires_in_seconds": OTP_TTL_SECONDS,
             "resend_after_seconds": RESEND_DELAY_SECONDS,
             "dev_code": code if OTP_DEV_MODE else None}

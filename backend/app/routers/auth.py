@@ -18,6 +18,7 @@ from ..config import SESSION_IDLE_MINUTES
 from ..security import (create_access_token, current_sid, hash_password, oauth2_scheme,
                         verify_password)
 from ..security_monitor import after_login, check_not_locked, record_attempt
+from ..services import notify
 from ..sessions import end_session, start_session
 
 router = APIRouter(prefix="/auth", tags=["Authentification"])
@@ -236,3 +237,36 @@ def logout(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     if sid:
         end_session(db, sid, "logout")
     return {"ok": True}
+
+
+@router.post("/password/request")
+def password_request(data: schemas.PasswordRequestIn, db: Session = Depends(get_db)):
+    """Mot de passe oublié, étape 1 : envoie un code au contact du compte. Réponse neutre (ne révèle pas l'existence du compte)."""
+    result = {"message": "Si un compte existe pour cet identifiant, un code de réinitialisation vient d'être envoyé.",
+              "resend_after_seconds": RESEND_DELAY_SECONDS, "dev_code": None}
+    kind, value = parse_identifier(data.identifier, DEFAULT_COUNTRY_CODE)
+    user = _find_user(db, data.identifier)
+    if user and kind and user.role != models.Role.admin:
+        contact = _contact(db, user)
+        if contact is not None and contact.verified:
+            info = create_and_send_otp(db, user, kind, value)
+            result["dev_code"] = info["dev_code"] if OTP_DEV_MODE else None
+    return result
+
+
+@router.post("/password/reset")
+def password_reset(data: schemas.PasswordResetIn, db: Session = Depends(get_db)):
+    """Mot de passe oublié, étape 2 : vérifie le code, change le mot de passe et ferme toutes les sessions ouvertes."""
+    user = _find_user(db, data.identifier)
+    contact = _contact(db, user) if user else None
+    if not user or contact is None or user.role == models.Role.admin:
+        raise HTTPException(400, "Code incorrect ou expiré.")
+    check_otp(db, user, contact, data.code.strip())          # même contrôle que la connexion par code
+    user.password_hash = hash_password(data.new_password)
+    db.query(models.UserSession).filter(models.UserSession.user_id == user.id,
+                                        models.UserSession.revoked_at.is_(None)).update(
+        {"revoked_at": datetime.utcnow(), "revoked_reason": "password_reset"}, synchronize_session=False)
+    notify(db, user.id, "Votre mot de passe a été modifié. Toutes vos sessions ouvertes ont été fermées. "
+                        "Si ce n'est pas vous, contactez l'administration immédiatement.")
+    db.commit()
+    return {"message": "Mot de passe modifié. Vous pouvez maintenant vous connecter."}

@@ -98,3 +98,33 @@ Au démarrage, l'API affiche dans ses journaux (Render > Logs) des lignes `[SÉC
 ## Tests automatiques
 - Sur votre PC : double-clic sur `5_TESTER.bat` (ou `python -m pytest` dans `backend`). Les tests d'intégration créent une base temporaire : vos données ne sont pas touchées.
 - Sur GitHub : le fichier `.github/workflows/tests.yml` lance les tests de l'API et la compilation du site à chaque `git push` (onglet **Actions** du dépôt). Une pastille verte = tout fonctionne.
+
+## Envoi réel des codes (e-mail et SMS) : passer du mode démonstration au mode réel
+Par défaut, les codes ne partent pas : ils s'affichent sur le site et dans les journaux. Pour un vrai utilisateur :
+
+**E-mail avec Gmail**
+1. Activez la validation en deux étapes sur le compte Google de l'entreprise, puis créez un **mot de passe d'application** (myaccount.google.com > Sécurité > Mots de passe des applications).
+2. Sur Render (service talentconnect-api) > Environment :
+   - `OTP_DELIVERY` = `smtp`
+   - `OTP_DEV_MODE` = `false`
+   - `SMTP_HOST` = `smtp.gmail.com`, `SMTP_PORT` = `587`
+   - `SMTP_USER` = l'adresse Gmail, `SMTP_FROM` = la même adresse
+   - `SMTP_PASSWORD` = le mot de passe d'application (16 caractères)
+3. Enregistrez : le service redémarre. Testez avec une vraie adresse e-mail.
+
+**SMS (inscription par téléphone)** : compte Twilio, puis `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` et `TWILIO_SMS_FROM`. Sans Twilio en mode réel, l'inscription par téléphone est refusée avec un message clair.
+
+**Important** : en mode réel, si un code ne peut pas partir, l'utilisateur voit une erreur (et non un faux message de succès). Vérifiez les journaux Render en cas de problème.
+
+## E-mail par API Brevo (à utiliser sur Render)
+L'offre gratuite de Render bloque le SMTP sortant (erreur « Network is unreachable »). Solution : l'API Brevo, en HTTPS.
+1. Créez un compte gratuit sur https://www.brevo.com.
+2. **Senders & IP** (ou Expéditeurs) : ajoutez l'adresse qui enverra les codes (votre Gmail) et validez-la par le lien reçu.
+3. **SMTP & API** > **API Keys** : créez une clé. Copiez-la (elle n'est affichée qu'une fois).
+4. Sur Render, ajoutez :
+   - `OTP_DELIVERY` = `smtp`, `OTP_DEV_MODE` = `false`
+   - `BREVO_API_KEY` = la clé
+   - `BREVO_SENDER_EMAIL` = l'adresse validée
+   - `BREVO_SENDER_NAME` = `TalentConnect` (facultatif)
+5. Enregistrez, attendez « Live », puis testez une inscription.
+Limite : les codes partent de l'adresse validée ; les destinataires doivent recevoir normalement. Pour une adresse de marque (noreply@votre-domaine), il faudra acheter un nom de domaine plus tard.
