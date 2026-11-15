@@ -10,6 +10,7 @@ from .database import Base, SessionLocal, engine
 from .routers import (account, admin, applications, assistant, auth, billing, favorites, kyc,
                       notifications, offers, profiles, public, recommendations, security_center)
 from .security import hash_password, verify_password
+from .http_security import apply_security_headers
 from .startup_checks import collect_warnings
 
 Base.metadata.create_all(bind=engine)
@@ -45,10 +46,17 @@ if SEED_DEMO_DATA:
 
 app = FastAPI(title="TalentConnect API",
               description="Plateforme intelligente de recrutement, d'emploi et de gestion des stages",
-              version="0.11.0")
+              version="0.13.0")
 
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+@app.middleware("http")
+async def _security_headers(request, call_next):
+    response = await call_next(request)
+    apply_security_headers(response.headers, hsts=request.url.scheme == "https" or bool(os.getenv("RENDER")))
+    return response
+
 
 for r in (auth, account, profiles, offers, applications, favorites, notifications,
           recommendations, assistant, admin, kyc, public, billing, security_center):
@@ -60,7 +68,7 @@ app.include_router(security_center.admin_router)
 
 @app.get("/", tags=["Santé"])
 def root():
-    return {"app": "TalentConnect API", "version": "0.11.0", "status": "ok", "docs": "/docs"}
+    return {"app": "TalentConnect API", "version": "0.13.0", "status": "ok", "docs": "/docs"}
 
 
 @app.get("/health", tags=["Santé"])

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api, { errorMessage, saveSession } from "../api";
 
 const HOME_BY_ROLE = { candidate: "/candidate", company: "/company", admin: "/admin" };
@@ -166,7 +166,13 @@ export default function Login() {
     <div className="auth">
       {side}
       <form className="card auth-form" onSubmit={submit}>
-        <h2>{isLogin ? "Connexion" : "Créer un compte"}</h2>
+        <div className="auth-tabs" role="tablist">
+          <button type="button" role="tab" aria-selected={isLogin} className={isLogin ? "on" : ""}
+                  onClick={() => { setMode("login"); setError(""); setInfo(""); }}>Se connecter</button>
+          <button type="button" role="tab" aria-selected={!isLogin} className={!isLogin ? "on" : ""}
+                  onClick={() => { setMode("register"); setError(""); setInfo(""); }}>Créer un compte</button>
+        </div>
+        <h2 className="auth-title">{isLogin ? "Bon retour parmi nous" : "Bienvenue, créez votre compte"}</h2>
         {reasonMsg && <p className="info">{reasonMsg}</p>}
         {!isLogin && (
           <label>Je suis
@@ -213,13 +219,14 @@ export default function Login() {
                    onChange={set("password")} required />
           </label>
         )}
+        {isLogin && method === "password" && (
+          <p style={{ textAlign: "right", margin: "-6px 0 10px" }}><Link to="/mot-de-passe-oublie" className="link small-link">Mot de passe oublié ?</Link></p>
+        )}
         {error && <p className="error">{error}</p>}
         <button className="btn full" type="submit">
           {!isLogin ? "Recevoir mon code" : method === "code" ? "Recevoir un code" : "Se connecter"}
         </button>
-        <button type="button" className="link" onClick={() => { setMode(isLogin ? "register" : "login"); setError(""); }}>
-          {isLogin ? "Pas encore de compte ? S'inscrire" : "Déjà inscrit ? Se connecter"}
-        </button>
+
       </form>
     </div>
   );

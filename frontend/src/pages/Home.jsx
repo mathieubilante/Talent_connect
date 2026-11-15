@@ -61,7 +61,7 @@ export default function Home() {
             {meta.skills.slice(0, 6).map((s) => <Link key={s.name} to={`/offers?q=${encodeURIComponent(s.name)}`}>{s.name}</Link>)}
           </div>
         )}
-        {stats && (
+        {stats && stats.offers > 0 && (
           <div className="stats-row">
             <div><b>{stats.offers}</b><span>offres actives</span></div>
             <div><b>{stats.companies}</b><span>entreprises</span></div>
@@ -119,7 +119,7 @@ export default function Home() {
       )}
 
       <h2 className="section-title">Ce que vous pouvez faire sur la plateforme</h2>
-      {SHOWCASE.map(({ Art, title, points }, i) => (
+      {SHOWCASE.slice(0, 3).map(({ Art, title, points }, i) => (
         <section key={title} className={`showcase ${i % 2 ? "reverse" : ""}`}>
           <div className="showcase-text">
             <h3>{title}</h3>

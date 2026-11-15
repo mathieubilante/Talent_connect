@@ -7,7 +7,7 @@ import pytest
 _TMP = tempfile.mkdtemp(prefix="tc_tests_")
 os.environ.update({
     "DATABASE_URL": f"sqlite:///{_TMP}/test.db",
-    "SECRET_KEY": "cle-de-test-uniquement",
+    "SECRET_KEY": "cle-de-test-uniquement-tres-longue-32-caracteres-ou-plus",
     "ADMIN_PASSWORD": "AdminTest2026!",
     "OTP_DEV_MODE": "true",
     "OTP_DELIVERY": "console",

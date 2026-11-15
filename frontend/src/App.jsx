@@ -18,6 +18,7 @@ import CompanySpace from "./pages/CompanySpace.jsx";
 import Home from "./pages/Home.jsx";
 import Kyc from "./pages/Kyc.jsx";
 import Login from "./pages/Login.jsx";
+import PasswordReset from "./pages/PasswordReset.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import OfferDetail from "./pages/OfferDetail.jsx";
 import Offers from "./pages/Offers.jsx";
@@ -49,6 +50,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/mot-de-passe-oublie" element={<PasswordReset />} />
           <Route path="/offers" element={<Offers />} />
           <Route path="/offers/:id" element={<OfferDetail />} />
           <Route path="/companies" element={<Companies />} />

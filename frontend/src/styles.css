@@ -300,3 +300,17 @@ a { color:var(--blue2); }
 /* Sécurité (v0.10) */
 label.check { display:flex; align-items:center; gap:10px; color:var(--text); font-size:1rem; }
 label.check input { width:auto; margin:0; }
+
+/* v0.13 : page plus courte, choix connexion / inscription en haut */
+.showcase { padding:16px 20px; margin-bottom:12px; gap:20px; }
+.showcase h3 { font-size:1.1rem; margin-bottom:8px; }
+.showcase li { padding:3px 0 3px 26px; font-size:.92rem; }
+.showcase-art .art { max-width:230px; }
+.hero2 { padding:34px 24px 26px; }
+.section-title { margin:24px 0 12px; }
+.steps .card p { font-size:.9rem; }
+.auth-tabs { display:flex; background:var(--soft); border-radius:12px; padding:4px; margin-bottom:14px; }
+.auth-tabs button { flex:1; border:0; background:transparent; padding:10px; border-radius:9px; font:inherit; font-weight:700; color:var(--muted); cursor:pointer; }
+.auth-tabs button.on { background:#fff; color:var(--blue); box-shadow:0 1px 4px rgba(0,0,0,.12); }
+.auth-title { font-size:1.25rem; margin:0 0 10px; }
+.small-link { font-size:.85rem; }
