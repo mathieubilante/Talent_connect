@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+email-validator
+PyJWT
+bcrypt
+python-multipart
+pdfplumber
+scikit-learn
+pytest
+httpx
+python-dotenv
+cryptography
+google-auth
+requests

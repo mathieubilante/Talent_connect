@@ -13,6 +13,7 @@ export default function Login() {
   const [form, setForm] = useState({
     channel: "email", identifier: "", password: "", name: "",
     role: params.get("role") === "company" ? "company" : "candidate",
+    age: "", birth_date: "", education: "", field_of_study: "", current_activity: "",
   });
   const [otp, setOtp] = useState({ identifier: "", devCode: "", code: "", resendIn: 0 });
   const [error, setError] = useState("");
@@ -89,6 +90,8 @@ export default function Login() {
       } else {                                   // inscription
         const payload = {
           channel: form.channel, password: form.password, role: form.role, name: form.name,
+          age: form.age, birth_date: form.birth_date, education: form.education,
+          field_of_study: form.field_of_study, current_activity: form.current_activity,
           email: form.channel === "email" ? form.identifier : null,
           phone: form.channel === "phone" ? form.identifier : null,
         };
@@ -205,6 +208,29 @@ export default function Login() {
               <button type="button" className={form.channel === "phone" ? "on" : ""}
                       onClick={() => setForm({ ...form, channel: "phone", identifier: "" })}>📱 Téléphone</button>
             </div>
+
+            {/* Champs supplémentaires pour compléter le profil */}
+            {form.role === "candidate" && (
+              <>
+                <div className="grid2">
+                  <label>Âge
+                    <input type="number" min="15" max="100" value={form.age} onChange={set("age")} placeholder="Ex: 28" />
+                  </label>
+                  <label>Date de naissance
+                    <input type="date" value={form.birth_date} onChange={set("birth_date")} />
+                  </label>
+                </div>
+                <label>Formation / Diplôme
+                  <input value={form.education} onChange={set("education")} placeholder="Ex: Licence Informatique" />
+                </label>
+                <label>Domaine d'études
+                  <input value={form.field_of_study} onChange={set("field_of_study")} placeholder="Ex: Sciences du numérique" />
+                </label>
+                <label>Activité actuelle
+                  <textarea rows={2} value={form.current_activity} onChange={set("current_activity")} placeholder="Décrivez brièvement votre parcours ou votre recherche..." />
+                </label>
+              </>
+            )}
           </>
         )}
         <label>

@@ -1,22 +1,24 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api, { errorMessage } from "../api";
+import ProfileAvatar from "../components/ProfileAvatar.jsx";
 
 export default function Account() {
   const [info, setInfo] = useState(null);
   const [history, setHistory] = useState([]);
   const [kyc, setKyc] = useState(null);
   const [error, setError] = useState("");
+  const [name, setName] = useState("");
 
   useEffect(() => {
     Promise.all([api.get("/account/me"), api.get("/account/login-history")])
-      .then(([a, h]) => { setInfo(a.data); setHistory(h.data); })
+      .then(([a, h]) => { setInfo(a.data); setName(a.data.name || ""); })
       .catch((e) => setError(errorMessage(e)));
     api.get("/kyc/me").then((r) => setKyc(r.data)).catch(() => {});
   }, []);
 
-  if (error) return <p className="error">{error}</p>;
-  if (!info) return <p className="muted">Chargement…</p>;
+  if (error) return <div className="container"><p className="error">{error}</p></div>;
+  if (!info) return <div className="container"><p className="muted">Chargement…</p></div>;
   const docsDone = kyc && kyc.complete;
   const docsApproved = kyc && kyc.required.length > 0 && kyc.documents.filter((d) => d.status === "approved").length >= kyc.required.length;
   const steps = [
@@ -30,9 +32,16 @@ export default function Account() {
   const pct = Math.min(100, Math.round((info.trial_logins_used / info.trial_limit) * 100));
 
   return (
-    <>
-      <h2>👤 Mon compte</h2>
-      <div className="kpis">
+    <div className="container">
+      <div className="card" style={{ display: "flex", alignItems: "center", gap: "24px", flexWrap: "wrap" }}>
+        <ProfileAvatar name={name} email={info?.email} onUpload={(data) => setName(data.name)} />
+        <div style={{ flex: 1, minWidth: "200px" }}>
+          <h1 style={{ margin: "0 0 4px" }}>{name || "Utilisateur"}</h1>
+          <p className="muted">Compte {info.status_label} · {info.trial_logins_used}/{info.trial_limit} connexions d'essai</p>
+        </div>
+      </div>
+
+      <div className="kpis" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", marginTop: "24px" }}>
         <div className="card kpi"><b>{info.status_label}</b><span>statut du compte</span></div>
         <div className="card kpi"><b>{info.trial_logins_used}/{info.trial_limit}</b><span>connexions d'essai utilisées</span></div>
         <div className="card kpi"><b>{info.trial_remaining}</b><span>connexions restantes</span></div>
@@ -83,6 +92,6 @@ export default function Account() {
           </table></div>
         )}
       </div>
-    </>
+    </div>
   );
 }

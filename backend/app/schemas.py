@@ -13,6 +13,11 @@ class RegisterIn(BaseModel):
     password: str = Field(min_length=8)
     role: Role
     name: str = ""            # nom de l'entreprise ou nom complet du candidat
+    age: Optional[int] = None
+    birth_date: Optional[str] = None
+    education: Optional[str] = None
+    field_of_study: Optional[str] = None
+    current_activity: Optional[str] = None
 
     @model_validator(mode="after")
     def check_contact(self):
