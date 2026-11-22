@@ -1,43 +1,37 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { t } from "../i18n.js";
 
-export const THEMES = [
-  ["emeraude", "Émeraude", "#0f766e"],
-  ["ocean", "Océan", "#1d4f91"],
-  ["violet", "Violet", "#5b21b6"],
-  ["rose", "Rose", "#be123c"],
-];
+/* Un seul bouton : Auto (thème du téléphone ou de l'ordinateur) → Clair → Sombre → Auto. */
+const MODES = ["auto", "light", "dark"];
+const ICON = { auto: "📱", light: "☀️", dark: "🌙" };
+const LABEL_KEY = { auto: "theme_auto", light: "theme_light", dark: "theme_dark" };
 
-export function applyTheme(name) {
-  const valid = THEMES.some(([k]) => k === name) ? name : "emeraude";
-  document.documentElement.dataset.theme = valid;
-  const color = (THEMES.find(([k]) => k === valid) || THEMES[0])[2];
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", color);
-  try { localStorage.setItem("theme", valid); } catch { /* stockage indisponible */ }
+export function getMode() {
+  try { const m = localStorage.getItem("themeMode"); if (MODES.includes(m)) return m; } catch { /* ignore */ }
+  return "auto";
+}
+
+export function applyMode(mode) {
+  const valid = MODES.includes(mode) ? mode : "auto";
+  const root = document.documentElement;
+  root.dataset.theme = "emeraude";                       // couleur unique de la plateforme
+  if (valid === "auto") delete root.dataset.mode; else root.dataset.mode = valid;
+  const dark = valid === "dark" || (valid === "auto" && window.matchMedia?.("(prefers-color-scheme: dark)").matches);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#0b1f1d" : "#0f766e");
+  try { localStorage.setItem("themeMode", valid); } catch { /* ignore */ }
   return valid;
 }
 
-export default function ThemeSwitcher() {
-  const [open, setOpen] = useState(false);
-  const [theme, setTheme] = useState(document.documentElement.dataset.theme || "emeraude");
-  useEffect(() => { setTheme(document.documentElement.dataset.theme || "emeraude"); }, []);
-
-  const choose = (name) => { setTheme(applyTheme(name)); setOpen(false); };
+export default function ThemeToggle() {
+  const [mode, setMode] = useState(getMode());
+  const next = () => {
+    const i = MODES.indexOf(mode);
+    const chosen = MODES[(i + 1) % MODES.length];
+    setMode(applyMode(chosen));
+  };
   return (
-    <div className="usermenu">
-      <button className="theme-btn" onClick={() => setOpen(!open)} title="Changer les couleurs" aria-label="Changer les couleurs">🎨</button>
-      {open && (
-        <>
-          <div className="menu-back" onClick={() => setOpen(false)} />
-          <div className="dropdown themes">
-            <span className="muted small" style={{ padding: "4px 12px" }}>Couleurs du site</span>
-            {THEMES.map(([key, label, color]) => (
-              <button key={key} className={theme === key ? "on" : ""} onClick={() => choose(key)}>
-                <i className="swatch" style={{ background: color }} /> {label}{theme === key ? " ✓" : ""}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
+    <button type="button" className="theme-btn" onClick={next} title={t(LABEL_KEY[mode])} aria-label={t(LABEL_KEY[mode])}>
+      {ICON[mode]} <span className="theme-label">{t(LABEL_KEY[mode])}</span>
+    </button>
   );
 }

@@ -2,12 +2,12 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
-import { applyTheme } from "./components/ThemeSwitcher.jsx";
+import { applyMode, getMode } from "./components/ThemeSwitcher.jsx";
+import { applyLang, getLang } from "./i18n.js";
 import "./styles.css";
 
-let saved = "emeraude";
-try { saved = localStorage.getItem("theme") || "emeraude"; } catch { /* stockage indisponible */ }
-applyTheme(saved);   // appliqué avant l'affichage pour éviter un clignotement de couleurs
+applyMode(getMode());   // clair, sombre ou automatique (téléphone / ordinateur)
+applyLang(getLang());   // langue et sens d'écriture (RTL pour l'arabe), avant l'affichage
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>

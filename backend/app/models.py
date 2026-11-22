@@ -50,6 +50,19 @@ class Candidate(Base):
     skills = Column(Text, default="")          # compétences séparées par des virgules
     cv_path = Column(String(500), default="")
     cv_text = Column(Text, default="")          # texte extrait du CV (pour le matching)
+    birth_date = Column(Date, nullable=True)     # date de naissance (âge calculé)
+    school = Column(String(200), default="")     # établissement où l'on étudie
+    occupation = Column(String(200), default="") # ce que l'on fait (étudiant, comptable, développeur...)
+    avatar_path = Column(String(500), default="")  # photo de profil (fichier stocké sur le serveur)
+
+    @property
+    def has_avatar(self) -> bool:
+        return bool(self.avatar_path)
+
+    @property
+    def cv_readable(self) -> bool:
+        from .cv_rules import is_readable
+        return bool(self.cv_path) and is_readable(self.cv_text or "")
 
     user = relationship("User", back_populates="candidate")
     applications = relationship("Application", back_populates="candidate")

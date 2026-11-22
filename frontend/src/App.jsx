@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { apiMisconfigured, getRole } from "./api";
 import Chatbot from "./components/Chatbot.jsx";
 import IdleGuard from "./components/IdleGuard.jsx";
@@ -17,6 +18,9 @@ import CompanyProfile from "./pages/CompanyProfile.jsx";
 import CompanySpace from "./pages/CompanySpace.jsx";
 import Home from "./pages/Home.jsx";
 import Kyc from "./pages/Kyc.jsx";
+import CompleteProfile from "./pages/CompleteProfile.jsx";
+import ImportOffers from "./pages/ImportOffers.jsx";
+import api from "./api";
 import Login from "./pages/Login.jsx";
 import PasswordReset from "./pages/PasswordReset.jsx";
 import Notifications from "./pages/Notifications.jsx";
@@ -34,6 +38,14 @@ const Private = ({ role, children }) => {
 
 export default function App() {
   const role = getRole();
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    // Candidat connecté avec un profil incomplet : on l'emmène compléter son profil (Google compris)
+    if (role !== "candidate" || location.pathname === "/complete-profile") return;
+    api.get("/profile/me").then((r) => { if (!r.data.profile_complete) navigate("/complete-profile", { replace: true }); })
+      .catch(() => {});
+  }, [role, location.pathname]);
   return (
     <>
       <Navbar />
@@ -59,6 +71,8 @@ export default function App() {
           <Route path="/billing" element={<Private><Billing /></Private>} />
           <Route path="/billing/receipt/:id" element={<Private><Receipt /></Private>} />
           <Route path="/security" element={<Private><Security /></Private>} />
+          <Route path="/import" element={<Private role="company"><ImportOffers /></Private>} />
+          <Route path="/complete-profile" element={<Private role="candidate"><CompleteProfile /></Private>} />
           <Route path="/kyc" element={<Private><Kyc /></Private>} />
           <Route path="/account" element={<Private><Account /></Private>} />
           <Route path="/candidate" element={<Private role="candidate"><CandidateSpace /></Private>} />

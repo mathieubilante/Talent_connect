@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { t } from "../i18n.js";
 import api, { errorMessage, getRole } from "../api";
 import ApplyModal from "../components/ApplyModal.jsx";
 import OfferCard from "../components/OfferCard.jsx";
@@ -66,8 +67,8 @@ export default function Offers() {
                  onSearch={(f) => update({ q: f.q, location: f.location, offer_type: f.offer_type })} />
       <div className="board">
         <aside className="card filters-side">
-          <h3>Filtres</h3>
-          <label>Type de contrat</label>
+          <h3>{t("filters")}</h3>
+          <label>{t("contract_type")}</label>
           <div className="seg">
             {[["", "Tous"], ["emploi", "Emploi"], ["stage", "Stage"]].map(([v, l]) => (
               <button key={v} className={offerType === v ? "on" : ""} onClick={() => update({ offer_type: v })}>{l}</button>
@@ -75,13 +76,13 @@ export default function Offers() {
           </div>
           <label>Secteur
             <select value={sector} onChange={(e) => update({ sector: e.target.value })}>
-              <option value="">Tous les secteurs</option>
+              <option value="">{t("all_sectors")}</option>
               {meta && meta.sectors.map((s) => <option key={s.name} value={s.name}>{s.name} ({s.count})</option>)}
             </select>
           </label>
           {meta && meta.locations.length > 0 && (
             <>
-              <label>Lieux fréquents</label>
+              <label>{t("frequent_places")}</label>
               <div className="chips">
                 {meta.locations.map((l) => (
                   <button key={l.name} className={`chip clickable ${location === l.name ? "ok" : ""}`}
@@ -93,12 +94,12 @@ export default function Offers() {
           {role === "candidate" && (
             <label>Trier par
               <select value={sort} onChange={(e) => update({ sort: e.target.value })}>
-                <option value="match">Meilleure compatibilité</option>
-                <option value="recent">Plus récentes</option>
+                <option value="match">{t("best_match")}</option>
+                <option value="recent">{t("most_recent")}</option>
               </select>
             </label>
           )}
-          {hasFilters && <button className="link" onClick={() => setParams(new URLSearchParams())}>Effacer les filtres</button>}
+          {hasFilters && <button className="link" onClick={() => setParams(new URLSearchParams())}>{t("clear_filters")}</button>}
         </aside>
 
         <section>
@@ -108,8 +109,8 @@ export default function Offers() {
           </div>
           {message && <p className="info">{message}</p>}
           {!loading && data.items.length === 0 && (
-            <div className="card empty"><h3>Aucune offre ne correspond à votre recherche</h3>
-              <p className="muted">Essayez d'autres mots-clés ou retirez des filtres.</p></div>
+            <div className="card empty"><h3>{t("no_result_title")}</h3>
+              <p className="muted">{t("no_result_help")}</p></div>
           )}
           {data.items.map((o) => (
             <OfferCard key={o.id} offer={o} role={role} applied={appliedIds.has(o.id)}

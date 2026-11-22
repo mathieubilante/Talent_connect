@@ -81,7 +81,10 @@ export default function CandidateSpace() {
           <label>CV (PDF, 5 Mo max) — l'IA en extrait vos compétences
             <input type="file" accept="application/pdf" onChange={uploadCv} />
           </label>
-          {profile.cv_path && <p className="muted small">✓ CV déjà déposé</p>}
+          {profile.cv_path && profile.cv_readable && <p className="muted small">✓ CV déposé et lisible</p>}
+          {profile.cv_path && !profile.cv_readable && (
+            <p className="profile-warn">⚠️ Votre CV ne contient pas de texte lisible (scan ou photo). Les compétences n'ont pas pu être détectées : déposez une version numérique du CV.</p>
+          )}
           <button className="btn" type="submit">Enregistrer</button>
         </form>
       )}

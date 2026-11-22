@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api, { errorMessage, saveSession } from "../api";
+import { t } from "../i18n.js";
 
 const HOME_BY_ROLE = { candidate: "/candidate", company: "/company", admin: "/admin" };
 
@@ -13,7 +14,6 @@ export default function Login() {
   const [form, setForm] = useState({
     channel: "email", identifier: "", password: "", name: "",
     role: params.get("role") === "company" ? "company" : "candidate",
-    age: "", birth_date: "", education: "", field_of_study: "", current_activity: "",
   });
   const [otp, setOtp] = useState({ identifier: "", devCode: "", code: "", resendIn: 0 });
   const [error, setError] = useState("");
@@ -24,9 +24,9 @@ export default function Login() {
   const navigate = useNavigate();
   const next = params.get("next");
   const REASONS = {
-    idle: "Vous avez été déconnecté après une période d'inactivité.",
-    expired: "Votre session a expiré. Reconnectez-vous.",
-    revoked: "Vous avez été déconnecté : une nouvelle connexion a été ouverte sur un autre appareil.",
+    idle: t("msg_session_idle"),
+    expired: t("msg_session_expired"),
+    revoked: t("msg_session_other"),
   };
   const reasonMsg = REASONS[params.get("reason")] || "";
   const goAfter = (role) => navigate(next && next.startsWith("/") && !next.startsWith("//") ? next : HOME_BY_ROLE[role] || "/offers");
@@ -86,12 +86,10 @@ export default function Login() {
       } else if (mode === "login") {            // connexion par code, sans mot de passe
         const { data } = await api.post("/auth/otp/request", { identifier: form.identifier });
         goOtp(form.identifier, data.dev_code, data.resend_after_seconds, "login");
-        setInfo("Si un compte existe pour cet identifiant, un code à 6 chiffres vient d'être envoyé.");
+        setInfo(t("msg_code_sent"));
       } else {                                   // inscription
         const payload = {
           channel: form.channel, password: form.password, role: form.role, name: form.name,
-          age: form.age, birth_date: form.birth_date, education: form.education,
-          field_of_study: form.field_of_study, current_activity: form.current_activity,
           email: form.channel === "email" ? form.identifier : null,
           phone: form.channel === "phone" ? form.identifier : null,
         };
@@ -103,7 +101,7 @@ export default function Login() {
       const detail = err?.response?.data?.detail;
       if (typeof detail === "string" && detail.startsWith("NOT_VERIFIED")) {
         goOtp(form.identifier, "", 0, "register");
-        setInfo("Votre compte n'est pas encore vérifié. Demandez un code pour terminer l'inscription.");
+        setInfo(t("msg_not_verified"));
       } else setError(errorMessage(err));
     }
   };
@@ -125,18 +123,18 @@ export default function Login() {
       const url = purpose === "login" ? "/auth/otp/request" : "/auth/resend-otp";
       const { data } = await api.post(url, { identifier: otp.identifier });
       setOtp((o) => ({ ...o, devCode: data.dev_code || "", code: "", resendIn: data.resend_after_seconds }));
-      setInfo("Un nouveau code vient d'être envoyé.");
+      setInfo(t("msg_new_code"));
     } catch (err) { setError(errorMessage(err)); }
   };
 
   const side = (
     <div className="auth-side">
-      <h2>Bienvenue</h2>
+      <h2>{t("welcome")}</h2>
       <ul>
-        <li>🔐 Connexion par e-mail, téléphone ou Google</li>
-        <li>🔢 Code de vérification à usage unique</li>
-        <li>🎯 Score de compatibilité sur chaque offre</li>
-        <li>🤖 TConnect IA : lettre de motivation et conseils</li>
+        <li>{t("point_login")}</li>
+        <li>{t("point_code")}</li>
+        <li>{t("point_score")}</li>
+        <li>{t("point_ai")}</li>
       </ul>
     </div>
   );
@@ -146,7 +144,7 @@ export default function Login() {
       <div className="auth">
         {side}
         <form className="card auth-form" onSubmit={verify}>
-          <h2>Saisir le code</h2>
+          <h2>{t("enter_code")}</h2>
           {info && <p className="info">{info}</p>}
           {otp.devCode && <p className="devcode">Mode démonstration : votre code est <b>{otp.devCode}</b></p>}
           <label>Code à 6 chiffres
@@ -154,11 +152,11 @@ export default function Login() {
                    onChange={(e) => setOtp({ ...otp, code: e.target.value.replace(/\D/g, "") })} required />
           </label>
           {error && <p className="error">{error}</p>}
-          <button className="btn full" type="submit" disabled={otp.code.length !== 6}>Vérifier</button>
+          <button className="btn full" type="submit" disabled={otp.code.length !== 6}>{t("verify")}</button>
           <button type="button" className="link" onClick={resend} disabled={otp.resendIn > 0}>
-            {otp.resendIn > 0 ? `Renvoyer le code (${otp.resendIn} s)` : "Renvoyer le code"}
+            {otp.resendIn > 0 ? `Renvoyer le code (${otp.resendIn} s)` : t("resend_code")}
           </button>
-          <button type="button" className="link" onClick={() => { setStep("form"); setError(""); setInfo(""); }}>← Retour</button>
+          <button type="button" className="link" onClick={() => { setStep("form"); setError(""); setInfo(""); }}>{t("back")}</button>
         </form>
       </div>
     );
@@ -171,86 +169,63 @@ export default function Login() {
       <form className="card auth-form" onSubmit={submit}>
         <div className="auth-tabs" role="tablist">
           <button type="button" role="tab" aria-selected={isLogin} className={isLogin ? "on" : ""}
-                  onClick={() => { setMode("login"); setError(""); setInfo(""); }}>Se connecter</button>
+                  onClick={() => { setMode("login"); setError(""); setInfo(""); }}>{t("login_tab")}</button>
           <button type="button" role="tab" aria-selected={!isLogin} className={!isLogin ? "on" : ""}
-                  onClick={() => { setMode("register"); setError(""); setInfo(""); }}>Créer un compte</button>
+                  onClick={() => { setMode("register"); setError(""); setInfo(""); }}>{t("register_tab")}</button>
         </div>
-        <h2 className="auth-title">{isLogin ? "Bon retour parmi nous" : "Bienvenue, créez votre compte"}</h2>
+        <h2 className="auth-title">{isLogin ? t("login_title") : t("register_title")}</h2>
         {reasonMsg && <p className="info">{reasonMsg}</p>}
         {!isLogin && (
           <label>Je suis
             <select value={form.role} onChange={set("role")}>
-              <option value="candidate">Candidat / étudiant</option>
-              <option value="company">Entreprise / recruteur</option>
+              <option value="candidate">{t("candidate_student")}</option>
+              <option value="company">{t("company_recruiter")}</option>
             </select>
           </label>
         )}
         {googleId && (
           <>
             <div ref={googleRef} className="google-btn" />
-            <div className="or"><span>ou</span></div>
+            <div className="or"><span>{t("or")}</span></div>
           </>
         )}
         {isLogin && (
           <div className="tabs small-tabs">
-            <button type="button" className={method === "password" ? "on" : ""} onClick={() => setMethod("password")}>🔑 Mot de passe</button>
-            <button type="button" className={method === "code" ? "on" : ""} onClick={() => setMethod("code")}>🔢 Code reçu</button>
+            <button type="button" className={method === "password" ? "on" : ""} onClick={() => setMethod("password")}>{t("by_password")}</button>
+            <button type="button" className={method === "code" ? "on" : ""} onClick={() => setMethod("code")}>{t("by_code")}</button>
           </div>
         )}
         {!isLogin && (
           <>
-            <label>{form.role === "company" ? "Nom de l'entreprise" : "Nom complet"}
+            <label>{form.role === "company" ? t("company_name_label") : t("full_name")}
               <input value={form.name} onChange={set("name")} required />
             </label>
             <div className="tabs small-tabs">
               <button type="button" className={form.channel === "email" ? "on" : ""}
-                      onClick={() => setForm({ ...form, channel: "email", identifier: "" })}>✉️ E-mail</button>
+                      onClick={() => setForm({ ...form, channel: "email", identifier: "" })}>{t("email_tab")}</button>
               <button type="button" className={form.channel === "phone" ? "on" : ""}
-                      onClick={() => setForm({ ...form, channel: "phone", identifier: "" })}>📱 Téléphone</button>
+                      onClick={() => setForm({ ...form, channel: "phone", identifier: "" })}>{t("phone_tab")}</button>
             </div>
-
-            {/* Champs supplémentaires pour compléter le profil */}
-            {form.role === "candidate" && (
-              <>
-                <div className="grid2">
-                  <label>Âge
-                    <input type="number" min="15" max="100" value={form.age} onChange={set("age")} placeholder="Ex: 28" />
-                  </label>
-                  <label>Date de naissance
-                    <input type="date" value={form.birth_date} onChange={set("birth_date")} />
-                  </label>
-                </div>
-                <label>Formation / Diplôme
-                  <input value={form.education} onChange={set("education")} placeholder="Ex: Licence Informatique" />
-                </label>
-                <label>Domaine d'études
-                  <input value={form.field_of_study} onChange={set("field_of_study")} placeholder="Ex: Sciences du numérique" />
-                </label>
-                <label>Activité actuelle
-                  <textarea rows={2} value={form.current_activity} onChange={set("current_activity")} placeholder="Décrivez brièvement votre parcours ou votre recherche..." />
-                </label>
-              </>
-            )}
           </>
         )}
         <label>
           {isLogin ? "E-mail ou numéro de téléphone"
-            : form.channel === "email" ? "Adresse e-mail" : "Numéro de téléphone (ex. 90 12 34 56)"}
+            : form.channel === "email" ? t("email_addr") : t("phone_example")}
           <input type={!isLogin && form.channel === "email" ? "email" : "text"}
                  value={form.identifier} onChange={set("identifier")} required />
         </label>
         {(!isLogin || method === "password") && (
-          <label>Mot de passe {!isLogin && "(8 caractères min.)"}
+          <label>{t("password_label")} {!isLogin && t("min8")}
             <input type="password" minLength={!isLogin ? 8 : undefined} value={form.password}
                    onChange={set("password")} required />
           </label>
         )}
         {isLogin && method === "password" && (
-          <p style={{ textAlign: "right", margin: "-6px 0 10px" }}><Link to="/mot-de-passe-oublie" className="link small-link">Mot de passe oublié ?</Link></p>
+          <p style={{ textAlign: "right", margin: "-6px 0 10px" }}><Link to="/mot-de-passe-oublie" className="link small-link">{t("forgot")}</Link></p>
         )}
         {error && <p className="error">{error}</p>}
         <button className="btn full" type="submit">
-          {!isLogin ? "Recevoir mon code" : method === "code" ? "Recevoir un code" : "Se connecter"}
+          {!isLogin ? t("send_my_code") : method === "code" ? t("send_code") : t("login_btn")}
         </button>
 
       </form>

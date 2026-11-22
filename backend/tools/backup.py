@@ -1,42 +1,55 @@
-"""Sauvegarde des données : base de données + documents chiffrés.
+"""Sauvegarde CHIFFRÉE (AES-256-GCM) : base de données + documents.
 
-Utilisation (depuis le dossier backend, environnement Python activé) :   python -m tools.backup
-- SQLite : copie du fichier de base de données.
-- PostgreSQL : export avec pg_dump (doit être installé ; sur Render, utilisez aussi les sauvegardes du service de base de données).
-Le dossier créé (sauvegardes/AAAAMMJJ_HHMMSS) contient des données sensibles : ne le publiez jamais sur GitHub.
+Usage (dossier backend, environnement activé) : python -m tools.backup
+Prérequis : DATA_ENCRYPTION_KEY défini (voir config.py). Sans clé, la sauvegarde est refusée.
 """
 import datetime
+import json
 import os
-import shutil
-import subprocess
+import sys
 
-from app.config import DATABASE_URL, KYC_DIR, UPLOAD_DIR
+from app.backup_core import make_backup, manifest_to_json
+from app.config import DATA_ENCRYPTION_KEY, DATABASE_URL, KYC_DIR
+from app.secure_crypto import load_key
+
+
+def _read_tree(root: str, prefix: str) -> dict:
+    out = {}
+    if os.path.isdir(root):
+        for dirpath, _, names in os.walk(root):
+            for n in names:
+                full = os.path.join(dirpath, n)
+                rel = os.path.relpath(full, root).replace("\\", "/")
+                with open(full, "rb") as f:
+                    out[f"{prefix}/{rel}"] = f.read()
+    return out
 
 
 def main() -> None:
-    out = os.path.join("sauvegardes", datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
-    os.makedirs(out, exist_ok=True)
-
-    if DATABASE_URL.startswith("sqlite:///"):
-        path = DATABASE_URL[len("sqlite:///"):]
-        if os.path.isfile(path):
-            shutil.copy2(path, os.path.join(out, "talentconnect.db"))
-            print("Base SQLite copiée.")
-        else:
-            print(f"Fichier de base introuvable : {path}")
-    elif shutil.which("pg_dump"):
-        subprocess.run(["pg_dump", "--no-owner", "-f", os.path.join(out, "talentconnect.sql"), DATABASE_URL], check=True)
-        print("Base PostgreSQL exportée.")
+    if not DATA_ENCRYPTION_KEY:
+        print("Sauvegarde refusée : DATA_ENCRYPTION_KEY n'est pas défini. Une sauvegarde non chiffrée n'est pas autorisée.")
+        sys.exit(1)
+    key = load_key(DATA_ENCRYPTION_KEY)
+    files = {}
+    if DATABASE_URL.startswith("sqlite:///") and os.path.isfile(DATABASE_URL[len("sqlite:///"):]):
+        with open(DATABASE_URL[len("sqlite:///"):], "rb") as f:
+            files["database/talentconnect.db"] = f.read()
     else:
-        print("pg_dump est introuvable : installez les outils PostgreSQL ou utilisez les sauvegardes de votre hébergeur.")
-
-    for source, name in ((KYC_DIR, "documents_chiffres"), (UPLOAD_DIR, "cv")):
-        if os.path.isdir(source):
-            shutil.copytree(source, os.path.join(out, name), dirs_exist_ok=True)
-            print(f"Dossier copié : {name}")
-
-    print(f"\nSauvegarde créée dans : {out}")
-    print("IMPORTANT : sauvegardez séparément la clé KYC_ENCRYPTION_KEY (sans elle, les documents chiffrés sont illisibles).")
+        print("Base non SQLite : utilisez pg_dump puis chiffrez le fichier, ou la sauvegarde de votre hébergeur.")
+    files.update(_read_tree(KYC_DIR, "documents"))
+    if not files:
+        print("Rien à sauvegarder.")
+        return
+    sealed, manifest = make_backup(files, key)
+    stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    out = os.path.join("sauvegardes", stamp)
+    os.makedirs(out, exist_ok=True)
+    with open(os.path.join(out, "sauvegarde.tcbak"), "wb") as f:
+        f.write(sealed)
+    with open(os.path.join(out, "manifeste.json"), "wb") as f:
+        f.write(manifest_to_json(manifest))
+    print(f"Sauvegarde chiffrée créée : {out} ({len(files)} fichier(s))")
+    print("IMPORTANT : conservez la clé DATA_ENCRYPTION_KEY dans un coffre séparé. Sans elle, la sauvegarde est illisible.")
 
 
 if __name__ == "__main__":

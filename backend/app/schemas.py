@@ -13,11 +13,6 @@ class RegisterIn(BaseModel):
     password: str = Field(min_length=8)
     role: Role
     name: str = ""            # nom de l'entreprise ou nom complet du candidat
-    age: Optional[int] = None
-    birth_date: Optional[str] = None
-    education: Optional[str] = None
-    field_of_study: Optional[str] = None
-    current_activity: Optional[str] = None
 
     @model_validator(mode="after")
     def check_contact(self):
@@ -74,11 +69,14 @@ class TokenOut(BaseModel):
 
 
 class CandidateUpdate(BaseModel):
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    phone: Optional[str] = None
-    education: Optional[str] = None
-    skills: Optional[str] = None
+    first_name: Optional[str] = Field(default=None, max_length=100)
+    last_name: Optional[str] = Field(default=None, max_length=100)
+    phone: Optional[str] = Field(default=None, max_length=30)
+    education: Optional[str] = Field(default=None, max_length=255)
+    skills: Optional[str] = Field(default=None, max_length=2000)
+    birth_date: Optional[date] = None
+    school: Optional[str] = Field(default=None, max_length=200)
+    occupation: Optional[str] = Field(default=None, max_length=200)
 
 
 class CandidateOut(BaseModel):
@@ -90,6 +88,22 @@ class CandidateOut(BaseModel):
     education: str
     skills: str
     cv_path: str
+    birth_date: Optional[date] = None
+    school: str = ""
+    occupation: str = ""
+    has_avatar: bool = False
+    cv_readable: bool = False
+
+
+class ProfileMeOut(BaseModel):
+    role: str
+    email: str
+    full_name: str
+    initials: str
+    has_avatar: bool
+    profile_complete: bool
+    missing: list[str]
+    age: Optional[int] = None
 
 
 class CompanyUpdate(BaseModel):

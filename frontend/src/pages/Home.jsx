@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { t } from "../i18n.js";
 import api, { getRole } from "../api";
 import CompanyLogo from "../components/CompanyLogo.jsx";
 import { BellArt, ChatArt, CvArt, HeroArt, LockArt, MatchArt } from "../components/Illustrations.jsx";
@@ -52,25 +53,25 @@ export default function Home() {
       <section className="hero2">
         <img className="hero-bg" src="/images/hero.jpg" alt="" onError={(e) => { e.currentTarget.style.display = "none"; }} />
         <HeroArt />
-        <h1>Trouvez l'emploi ou le stage<br />qui vous correspond</h1>
-        <p>Des offres d'entreprises, un score de compatibilité calculé par l'IA et un suivi de vos candidatures.</p>
+        <h1>{t("hero_title")}</h1>
+        <p>{t("hero_sub")}</p>
         <SearchBar big onSearch={search} />
         {meta && meta.skills.length > 0 && (
           <div className="popular">
-            <span>Recherches populaires :</span>
+            <span>{t("popular")}</span>
             {meta.skills.slice(0, 6).map((s) => <Link key={s.name} to={`/offers?q=${encodeURIComponent(s.name)}`}>{s.name}</Link>)}
           </div>
         )}
         {stats && stats.offers > 0 && (
           <div className="stats-row">
-            <div><b>{stats.offers}</b><span>offres actives</span></div>
-            <div><b>{stats.companies}</b><span>entreprises</span></div>
-            <div><b>{stats.candidates}</b><span>candidats</span></div>
+            <div><b>{stats.offers}</b><span>{t("stat_offers")}</span></div>
+            <div><b>{stats.companies}</b><span>{t("stat_companies")}</span></div>
+            <div><b>{stats.candidates}</b><span>{t("stat_candidates")}</span></div>
           </div>
         )}
       </section>
 
-      <h2 className="section-title">Parcourir par secteur</h2>
+      <h2 className="section-title">{t("sectors_title")}</h2>
       <div className="categories">
         {sectors.map((s) => (
           <Link key={s.name} to={`/offers?sector=${encodeURIComponent(s.name)}`} className="category">
@@ -80,10 +81,10 @@ export default function Home() {
       </div>
 
       <div className="row section-head">
-        <h2>Offres récentes</h2>
-        <Link to="/offers" className="link">Voir toutes les offres →</Link>
+        <h2>{t("recent_title")}</h2>
+        <Link to="/offers" className="link">{t("see_all_offers")}</Link>
       </div>
-      {latest.length === 0 && <p className="muted">Aucune offre pour le moment.</p>}
+      {latest.length === 0 && <p className="muted">{t("no_offer")}</p>}
       <div className="mini-grid">
         {latest.map((o) => (
           <Link key={o.id} to={`/offers/${o.id}`} className="card mini-offer">
@@ -100,8 +101,8 @@ export default function Home() {
       {companies.length > 0 && (
         <>
           <div className="row section-head">
-            <h2>Entreprises qui recrutent</h2>
-            <Link to="/companies" className="link">Toutes les entreprises →</Link>
+            <h2>{t("companies_hiring")}</h2>
+            <Link to="/companies" className="link">{t("all_companies")}</Link>
           </div>
           <div className="mini-grid">
             {companies.map((c) => (
@@ -118,7 +119,7 @@ export default function Home() {
         </>
       )}
 
-      <h2 className="section-title">Ce que vous pouvez faire sur la plateforme</h2>
+      <h2 className="section-title">{t("features_title")}</h2>
       {SHOWCASE.slice(0, 3).map(({ Art, title, points }, i) => (
         <section key={title} className={`showcase ${i % 2 ? "reverse" : ""}`}>
           <div className="showcase-text">
@@ -129,17 +130,17 @@ export default function Home() {
         </section>
       ))}
 
-      <h2 className="section-title">Comment ça marche</h2>
+      <h2 className="section-title">{t("how_title")}</h2>
       <div className="steps">
-        <div className="card"><span className="num">1</span><h3>Inscrivez-vous en 1 minute</h3><p className="muted">Par e-mail, téléphone ou compte Google. Un code à 6 chiffres confirme votre identité.</p></div>
-        <div className="card"><span className="num">2</span><h3>Complétez votre dossier</h3><p className="muted">Déposez votre CV et vos documents d'identité ; l'administration valide votre compte.</p></div>
-        <div className="card"><span className="num">3</span><h3>Postulez en un clic</h3><p className="muted">Lettre de motivation générée, score de compatibilité et suivi par notifications.</p></div>
+        <div className="card"><span className="num">1</span><h3>{t("step1_t")}</h3><p className="muted">{t("step1_p")}</p></div>
+        <div className="card"><span className="num">2</span><h3>{t("step2_t")}</h3><p className="muted">{t("step2_p")}</p></div>
+        <div className="card"><span className="num">3</span><h3>{t("step3_t")}</h3><p className="muted">{t("step3_p")}</p></div>
       </div>
 
       {role !== "company" && (
         <section className="cta-band">
-          <div><h2>Vous recrutez ?</h2><p>Publiez vos offres et recevez des candidatures classées par compatibilité.</p></div>
-          <Link to="/login?mode=register&role=company" className="btn big">Publier une offre</Link>
+          <div><h2>{t("recruit_q")}</h2><p>{t("recruit_p")}</p></div>
+          <Link to="/login?mode=register&role=company" className="btn big">{t("publish_btn")}</Link>
         </section>
       )}
     </>

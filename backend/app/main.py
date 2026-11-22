@@ -7,13 +7,33 @@ from . import models
 from .config import (ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_PASSWORD_FROM_ENV, CORS_ORIGINS, DATABASE_URL,
                      KYC_ENCRYPTION_KEY, OTP_DEV_MODE, SECRET_KEY, SEED_DEMO_DATA)
 from .database import Base, SessionLocal, engine
-from .routers import (account, admin, applications, assistant, auth, billing, favorites, kyc,
+from .routers import (account, admin, applications, assistant, auth, billing, favorites, imports, kyc,
                       notifications, offers, profiles, public, recommendations, security_center)
 from .security import hash_password, verify_password
 from .http_security import apply_security_headers
 from .startup_checks import collect_warnings
 
 Base.metadata.create_all(bind=engine)
+
+
+def ensure_columns() -> None:
+    """Ajoute aux bases existantes les colonnes nouvelles (create_all ne modifie jamais une table existante).
+    Fonctionne sur SQLite comme sur PostgreSQL. Sans cela, la partie candidat échouerait en ligne."""
+    from sqlalchemy import inspect, text
+    additions = {"birth_date": "DATE", "school": "VARCHAR(200) DEFAULT ''",
+                 "occupation": "VARCHAR(200) DEFAULT ''", "avatar_path": "VARCHAR(500) DEFAULT ''"}
+    insp = inspect(engine)
+    if not insp.has_table("candidates"):
+        return
+    existing = {c["name"] for c in insp.get_columns("candidates")}
+    with engine.begin() as conn:
+        for name, sql_type in additions.items():
+            if name not in existing:
+                conn.execute(text(f"ALTER TABLE candidates ADD COLUMN {name} {sql_type}"))
+                print(f"[BASE] colonne ajoutée : candidates.{name}", flush=True)
+
+
+ensure_columns()
 
 
 def ensure_admin() -> None:
@@ -46,7 +66,7 @@ if SEED_DEMO_DATA:
 
 app = FastAPI(title="TalentConnect API",
               description="Plateforme intelligente de recrutement, d'emploi et de gestion des stages",
-              version="0.16.0")
+              version="0.22.0")
 
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
@@ -59,7 +79,7 @@ async def _security_headers(request, call_next):
 
 
 for r in (auth, account, profiles, offers, applications, favorites, notifications,
-          recommendations, assistant, admin, kyc, public, billing, security_center):
+          recommendations, assistant, admin, kyc, public, billing, security_center, imports):
     app.include_router(r.router)
 app.include_router(kyc.admin_router)
 app.include_router(billing.admin_router)
@@ -68,7 +88,7 @@ app.include_router(security_center.admin_router)
 
 @app.get("/", tags=["Santé"])
 def root():
-    return {"app": "TalentConnect API", "version": "0.16.0", "status": "ok", "docs": "/docs"}
+    return {"app": "TalentConnect API", "version": "0.22.0", "status": "ok", "docs": "/docs"}
 
 
 @app.get("/health", tags=["Santé"])

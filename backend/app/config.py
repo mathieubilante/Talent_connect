@@ -65,3 +65,8 @@ TWILIO_WHATSAPP_FROM = os.getenv("TWILIO_WHATSAPP_FROM", "").strip()       # ex.
 BREVO_API_KEY = os.getenv("BREVO_API_KEY", "").strip()
 BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL", "").strip()     # adresse validée dans Brevo
 BREVO_SENDER_NAME = os.getenv("BREVO_SENDER_NAME", "TalentConnect").strip()
+
+# --- Chiffrement des données (priorité 3) : clé AES-256 en base64 (32 octets). Générer avec :
+#   python -c "from app.secure_crypto import generate_key_b64; print(generate_key_b64())"
+# Sans clé, les sauvegardes chiffrées ne peuvent pas être créées (refus explicite).
+DATA_ENCRYPTION_KEY = os.getenv("DATA_ENCRYPTION_KEY", "").strip()
