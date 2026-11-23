@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /login
+Disallow: /account
+Disallow: /kyc
+Disallow: /billing
+Disallow: /security
+Disallow: /notifications
+Disallow: /candidate
+Disallow: /company
+Disallow: /import
+Disallow: /complete-profile
+
+Sitemap: https://talentconnect-bm.vercel.app/sitemap.xml

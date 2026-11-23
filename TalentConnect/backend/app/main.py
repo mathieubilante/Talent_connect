@@ -66,10 +66,19 @@ if SEED_DEMO_DATA:
 
 app = FastAPI(title="TalentConnect API",
               description="Plateforme intelligente de recrutement, d'emploi et de gestion des stages",
-              version="0.23.1")
+              version="0.24.0")
 
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+@app.middleware("http")
+async def _force_https(request, call_next):
+    """Sur l'hébergement, toute requête en http est redirigée vers https (308 : la méthode est conservée)."""
+    from fastapi.responses import RedirectResponse
+    if os.getenv("RENDER") and request.headers.get("x-forwarded-proto", "https") == "http":
+        return RedirectResponse(url=str(request.url.replace(scheme="https")), status_code=308)
+    return await call_next(request)
+
 
 @app.middleware("http")
 async def _security_headers(request, call_next):
@@ -88,7 +97,7 @@ app.include_router(security_center.admin_router)
 
 @app.get("/", tags=["Santé"])
 def root():
-    return {"app": "TalentConnect API", "version": "0.23.1", "status": "ok", "docs": "/docs"}
+    return {"app": "TalentConnect API", "version": "0.24.0", "status": "ok", "docs": "/docs"}
 
 
 @app.get("/health", tags=["Santé"])
