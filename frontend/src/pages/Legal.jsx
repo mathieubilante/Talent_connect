@@ -9,9 +9,9 @@ export function PrivacyPage() {
     <article className="legal">
       <Seo title="Politique de confidentialité" description="Comment TalentConnect collecte, utilise et protège vos données personnelles." />
       <h1>Politique de confidentialité</h1>
-      <p className="muted">Dernière mise à jour : [date]</p>
+      <p className="muted">Dernière mise à jour : [22-11-2026]</p>
       <h2>1. Qui est responsable de vos données ?</h2>
-      <p>TalentConnect, [nom légal de l'entreprise], [adresse], contact : [adresse e-mail de contact].</p>
+      <p>TalentConnect,BILANTE Oupkil Mathieu, Lomé-togo, contact : bilantemathieu1@gmail.com.</p>
       <h2>2. Quelles données collectons-nous ?</h2>
       <ul>
         <li><b>Compte</b> : adresse e-mail ou numéro de téléphone, mot de passe (stocké sous forme chiffrée, jamais en clair).</li>

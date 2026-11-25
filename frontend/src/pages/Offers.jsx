@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { t } from "../i18n.js";
+import Seo from "../components/Seo.jsx";
 import api, { errorMessage, getRole } from "../api";
 import ApplyModal from "../components/ApplyModal.jsx";
 import OfferCard from "../components/OfferCard.jsx";
@@ -63,6 +64,7 @@ export default function Offers() {
 
   return (
     <>
+      <Seo title="Offres d'emploi et de stage" description="Parcourez les offres d'emploi et de stage, avec filtres par lieu, secteur et type de contrat." />
       <SearchBar key={`${q}|${location}|${offerType}`} initial={{ q, location, offer_type: offerType }}
                  onSearch={(f) => update({ q: f.q, location: f.location, offer_type: f.offer_type })} />
       <div className="board">

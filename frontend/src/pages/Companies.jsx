@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { t } from "../i18n.js";
+import Seo from "../components/Seo.jsx";
 import api, { errorMessage } from "../api";
 import CompanyLogo from "../components/CompanyLogo.jsx";
 
@@ -15,8 +16,9 @@ export default function Companies() {
 
   return (
     <>
+      <Seo title="Entreprises qui recrutent" description="Découvrez les entreprises qui recrutent et leurs offres actives." />
       <h2>{t("companies_title")}</h2>
-      <div className="card"><input placeholder={t("search_company")} value={q}
+      <div className="card"><input placeholder={t("search_company")}n value={q}
                                    onChange={(e) => setQ(e.target.value)} style={{ margin: 0 }} /></div>
       {error && <p className="error">{error}</p>}
       {shown.length === 0 && !error && <p className="muted">{t("no_company")}</p>}

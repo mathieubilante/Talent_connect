@@ -7,6 +7,7 @@ from .models import ApplicationStatus, OfferType, Role
 
 
 class RegisterIn(BaseModel):
+    website: str = ""          # champ piège anti-robots : doit rester vide
     channel: Literal["email", "phone"] = "email"
     email: Optional[EmailStr] = None
     phone: Optional[str] = None

@@ -64,6 +64,9 @@ def _verification_out(channel: str, destination: str, info: dict) -> schemas.Ver
 @router.post("/register", response_model=schemas.VerificationOut, status_code=201)
 def register(data: schemas.RegisterIn, db: Session = Depends(get_db)):
     """Étape 1 de l'inscription : crée le compte (non vérifié) et envoie un code OTP."""
+    if data.website.strip():
+        # un robot a rempli le champ piège : refus sans explication
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Requête refusée.")
     if data.role == models.Role.admin:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Création d'un admin non autorisée")
 

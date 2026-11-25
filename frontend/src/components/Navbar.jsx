@@ -60,6 +60,7 @@ export default function Navbar() {
             <>
               <Link to="/notifications" className="bell" title={t("menu_notifications")}>🔔{unread > 0 && <b>{unread}</b>}</Link>
               <div className="usermenu">
+                {me && <span className="nav-name">{me.full_name}</span>}
                 <button className="avatar-btn" onClick={() => setMenu(!menu)} aria-label={t("menu_account")} title={me?.full_name || t("menu_account")}>
                   <Avatar hasPhoto={!!me?.has_avatar} initials={me?.initials || "?"} size={38} />
                 </button>
