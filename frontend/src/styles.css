@@ -500,3 +500,26 @@ a { color:#0b6b62; }
 .cookie-actions { display:flex; gap:8px; }
 .hp-field { position:absolute; left:-10000px; width:1px; height:1px; overflow:hidden; }
 .field-error { color:#a8321f; font-size:.85rem; margin-top:-8px; margin-bottom:8px; }
+
+/* ===================== Corrections mobile (v0.24.1) ===================== */
+@media (max-width:900px) {
+  .burger { display:block; }
+  .topbar-in { flex-wrap:wrap; }
+  .links, .actions { display:none; width:100%; }
+  .links.open, .actions.open {
+    display:flex; flex-direction:column; align-items:stretch; gap:6px;
+    background:var(--card); border-radius:12px; padding:10px 12px; margin-top:6px;
+    box-shadow:0 4px 14px rgba(0,0,0,.12);
+  }
+  .links.open a { width:100%; padding:10px 12px; font-size:1rem; }
+  .actions.open > * { width:100%; text-align:center; }
+  .actions.open .usermenu { width:100%; }
+  .actions.open .btn-outline, .actions.open .btn, .actions.open .theme-btn,
+  .actions.open .lang-switch, .actions.open .install-btn { width:100%; justify-content:center; }
+  .actions.open .bell { align-self:flex-start; }
+}
+@media (max-width:600px) {
+  .theme-label { display:inline; }
+  .container { padding-bottom:96px; }
+  .chat-fab { width:48px; height:48px; font-size:1.3rem; }
+}

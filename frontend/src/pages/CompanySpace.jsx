@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import api, { errorMessage } from "../api";
+import { t } from "../i18n.js";
 import Chips from "../components/Chips.jsx";
 import MatchBar from "../components/MatchBar.jsx";
 
-const STATUSES = [["recue", "Reçue"], ["preselectionnee", "Présélectionnée"], ["entretien", "Entretien"], ["acceptee", "Acceptée"], ["refusee", "Refusée"]];
+const STATUSES = [["recue", "co_status_new"], ["preselectionnee", "co_status_pre"], ["entretien", "co_status_interview"], ["acceptee", "co_status_accepted"], ["refusee", "co_status_refused"]];
 const EMPTY = { title: "", description: "", offer_type: "stage", required_skills: "", location: "" };
 
 export default function CompanySpace() {
@@ -30,7 +31,7 @@ export default function CompanySpace() {
     e.preventDefault();
     try {
       await api.post("/offers", form);
-      setForm(EMPTY); setMessage("Offre publiée ✓"); load(); setTab("offres");
+      setForm(EMPTY); setMessage(t("co_offer_published")); load(); setTab("offres");
     } catch (err) { setMessage(errorMessage(err)); }
   };
   const changeStatus = async (id, status) => { await api.patch(`/applications/${id}/status`, { status }); load(); };
@@ -42,30 +43,30 @@ export default function CompanySpace() {
     catch (e) { setMessage(errorMessage(e)); }
   };
 
-  const tabs = [["apercu", "📊 Aperçu"], ["publier", "➕ Publier une offre"], ["offres", `📋 Mes offres (${active.length})`], ["talents", "🎯 Talents (IA)"]];
+  const tabs = [["apercu", t("co_tab_overview")], ["publier", t("co_tab_publish")], ["offres", `${t("co_tab_offers")} (${active.length})`], ["talents", t("co_tab_talents")]];
 
   return (
     <>
-      <h2>Espace entreprise</h2>
+      <h2>{t("co_space")}</h2>
       <div className="tabs">{tabs.map(([k, l]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>)}</div>
       {message && <p className="info">{message}</p>}
 
       {tab === "apercu" && (<>
         <div className="kpis">
-          <div className="card kpi"><b>{active.length}</b><span>offres actives</span></div>
-          <div className="card kpi"><b>{applications.length}</b><span>candidatures</span></div>
-          <div className="card kpi"><b>{pending}</b><span>à traiter</span></div>
-          <div className="card kpi"><b>{avg}%</b><span>compatibilité moyenne</span></div>
+          <div className="card kpi"><b>{active.length}</b><span>{t("co_kpi_active")}</span></div>
+          <div className="card kpi"><b>{applications.length}</b><span>{t("co_kpi_applications")}</span></div>
+          <div className="card kpi"><b>{pending}</b><span>{t("co_kpi_pending")}</span></div>
+          <div className="card kpi"><b>{avg}%</b><span>{t("co_kpi_match")}</span></div>
         </div>
-        <h3>Candidatures reçues (classées par compatibilité)</h3>
-        {applications.length === 0 && <p className="muted">Aucune candidature pour le moment.</p>}
+        <h3>{t("co_received_title")}</h3>
+        {applications.length === 0 && <p className="muted">{t("co_no_application")}</p>}
         {applications.map((a) => (
           <div className="card" key={a.id}>
             <div className="row">
-              <div><h3>{a.candidate_name || "Candidat"}</h3>
+              <div><h3>{a.candidate_name || t("co_candidate_default")}</h3>
                 <p className="muted">{a.candidate_education || "Formation non précisée"} · pour « {a.offer_title} »</p></div>
               <select value={a.status} onChange={(e) => changeStatus(a.id, e.target.value)}>
-                {STATUSES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                {STATUSES.map(([v, l]) => <option key={v} value={v}>{t(l)}</option>)}
               </select>
             </div>
             <MatchBar score={a.match_score} level={a.match_level} />
@@ -76,29 +77,29 @@ export default function CompanySpace() {
 
       {tab === "publier" && (
         <form className="card" onSubmit={publish}>
-          <label>Titre<input value={form.title} onChange={set("title")} required /></label>
-          <label>Description<textarea rows={5} value={form.description} onChange={set("description")} required /></label>
+          <label>{t("co_offer_label")}<input value={form.title} onChange={set("title")} required /></label>
+          <label>{t("co_description")}<textarea rows={5} value={form.description} onChange={set("description")} required /></label>
           <div className="grid">
-            <label>Type<select value={form.offer_type} onChange={set("offer_type")}><option value="stage">Stage</option><option value="emploi">Emploi</option></select></label>
-            <label>Lieu<input value={form.location} onChange={set("location")} /></label>
+            <label>{t("co_type")}<select value={form.offer_type} onChange={set("offer_type")}><option value="stage">{t("co_type_internship")}</option><option value="emploi">{t("co_type_job")}</option></select></label>
+            <label>{t("co_location")}<input value={form.location} onChange={set("location")} /></label>
           </div>
-          <label>Compétences requises (virgules) — elles alimentent le matching IA
+          <label>{t("co_skills_label")}
             <input value={form.required_skills} onChange={set("required_skills")} placeholder="python, sql, docker" /></label>
-          <button className="btn" type="submit">Publier l'offre</button>
+          <button className="btn" type="submit">{t("co_publish_btn")}</button>
         </form>
       )}
 
-      {tab === "offres" && (active.length === 0 ? <p className="muted">Aucune offre active.</p> : active.map((o) => (
+      {tab === "offres" && (active.length === 0 ? <p className="muted">{t("co_no_active")}</p> : active.map((o) => (
         <div className="card row" key={o.id}>
-          <div><h3>{o.title}</h3><p className="muted">{o.location} · {o.applications_count} candidature(s)</p>
+          <div><h3>{o.title}</h3><p className="muted">{o.location} · {o.applications_count} {t("co_applications_count")}</p>
             <Chips plain={(o.required_skills || "").split(",").map((s) => s.trim()).filter(Boolean)} /></div>
-          <button className="btn-danger" onClick={() => close(o.id)}>Clôturer</button>
+          <button className="btn-danger" onClick={() => close(o.id)}>{t("co_close")}</button>
         </div>)))}
 
       {tab === "talents" && (<>
-        <p className="muted">🤖 Choisissez une offre : l'IA classe les profils inscrits par compatibilité.</p>
+        <p className="muted">🤖 {t("co_talents_hint")}</p>
         <select value={talentOffer} onChange={(e) => findTalents(e.target.value)}>
-          <option value="">— Sélectionner une offre —</option>
+          <option value="">{t("co_select_offer")}</option>
           {active.map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
         </select>
         {talents.map((t) => (
