@@ -20,6 +20,9 @@ api.interceptors.response.use((r) => r, (err) => {
       && !window.location.pathname.startsWith("/account")) {
     window.location.href = "/account";
   }
+  if (err?.response?.status === 403 && typeof d === "string" && d.startsWith("SUBSCRIPTION_REQUIRED")) {
+    window.dispatchEvent(new Event("subscription-required"));
+  }
   if (err?.response?.status === 401 && localStorage.getItem("token")) {
     // Jeton périmé, révoqué ou inconnu : on efface la session et on renvoie UNE SEULE FOIS vers la connexion
     // (le drapeau de session évite toute boucle de redirections, notamment sur téléphone).

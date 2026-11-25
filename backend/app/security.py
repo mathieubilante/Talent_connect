@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from . import models
-from .account_rules import trial_info
+from .account_rules import subscription_required, trial_info
 from .accounts import account_payload, get_or_create_account
 from .billing import refresh_subscription
 from .config import ALGORITHM, SECRET_KEY, SESSION_MAX_HOURS
@@ -69,9 +69,12 @@ def get_current_user(user: models.User = Depends(get_user_unrestricted),
     info = trial_info(acc.status, acc.trial_logins_used, acc.trial_limit)
     info["message"] = account_payload(acc)["message"]
     if not info["access_allowed"]:
-        code = "ACCOUNT_REJECTED" if acc.status == "rejected" else "TRIAL_EXPIRED"
-        raise HTTPException(status.HTTP_403_FORBIDDEN, f"{code}: {info['message']}")
-    now = datetime.utcnow()  # dernière activité (écriture limitée à 1 fois par minute)
+        raise HTTPException(status.HTTP_403_FORBIDDEN, f"ACCOUNT_REJECTED: {info['message']}")
+    now = datetime.utcnow()
+    if subscription_required(acc.status, acc.created_at, now):
+        raise HTTPException(status.HTTP_403_FORBIDDEN,
+                            "SUBSCRIPTION_REQUIRED: Votre période d'utilisation gratuite est terminée. Abonnez-vous pour continuer.")
+    # dernière activité (écriture limitée à 1 fois par minute)
     if acc.last_activity_at is None or (now - acc.last_activity_at).total_seconds() > 60:
         acc.last_activity_at = now
         db.commit()

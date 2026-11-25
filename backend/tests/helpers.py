@@ -122,3 +122,15 @@ def expire_subscriptions(email):
         db.commit()
     finally:
         db.close()
+
+
+def age_account(email, days):
+    """Fait vieillir la création du compte (pour tester la fin de la période d'utilisation)."""
+    from app import models
+    db = _db()
+    try:
+        user = db.query(models.User).filter(models.User.email == email).first()
+        db.query(models.UserAccount).filter_by(user_id=user.id).update({"created_at": datetime.utcnow() - timedelta(days=days)})
+        db.commit()
+    finally:
+        db.close()

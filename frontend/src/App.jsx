@@ -9,6 +9,7 @@ import SiteFooter from "./components/SiteFooter.jsx";
 import TrialBanner from "./components/TrialBanner.jsx";
 import WelcomeModal from "./components/WelcomeModal.jsx";
 import CookieBanner from "./components/CookieBanner.jsx";
+import SubscriptionGate from "./components/SubscriptionGate.jsx";
 import Analytics from "./components/Analytics.jsx";
 import { PrivacyPage, TermsPage } from "./pages/Legal.jsx";
 import NotFound from "./pages/NotFound.jsx";
@@ -94,6 +95,7 @@ export default function App() {
         </Suspense>
       </main>
       {!role && <WelcomeModal />}
+      <SubscriptionGate />
       <CookieBanner />
       <Analytics />
       {role !== "admin" && <Chatbot />}
