@@ -57,13 +57,6 @@ def record_login(db: Session, user: models.User, ip: str, user_agent: str):
     acc.last_login_at = now
     acc.last_activity_at = now
 
-    if counted:
-        remaining = acc.trial_limit - acc.trial_logins_used
-        if remaining == 0:
-            notify(db, user.id, f"Vos {acc.trial_limit} connexions d'essai sont épuisées. "
-                                "Validez votre compte et souscrivez un abonnement pour continuer.")
-        elif remaining <= ALERT_THRESHOLD:
-            notify(db, user.id, f"Il vous reste {remaining} connexion(s) d'essai gratuit.")
     db.commit()
     db.refresh(acc)
     return acc

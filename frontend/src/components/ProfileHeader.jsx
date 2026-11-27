@@ -38,10 +38,6 @@ export default function ProfileHeader({ onError }) {
     <div className="card profile-head">
       <div className="profile-photo">
         <Avatar hasPhoto={!!me.has_avatar} initials={me.initials} size={96} refreshKey={version} />
-        <label className="photo-btn">
-          {busy ? "Envoi…" : (me.has_avatar ? "Changer la photo" : "Ajouter une photo")}
-          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadPhoto} disabled={busy} hidden />
-        </label>
       </div>
       <div className="profile-info">
         <h1 className="profile-name">{fullName}</h1>

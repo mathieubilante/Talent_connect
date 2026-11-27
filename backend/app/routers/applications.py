@@ -26,6 +26,8 @@ def _to_out(app: models.Application) -> schemas.ApplicationOut:
 def apply(data: schemas.ApplicationCreate,
           user: models.User = Depends(require_role(models.Role.candidate)),
           db: Session = Depends(get_db)):
+    from .offers import require_candidate_subscription
+    require_candidate_subscription(db, user)
     offer = db.get(models.JobOffer, data.offer_id)
     if not offer or not offer.is_active:
         raise HTTPException(404, "Offre introuvable ou clôturée")

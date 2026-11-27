@@ -210,6 +210,10 @@ def otp_login_request(data: schemas.OtpRequestIn, db: Session = Depends(get_db))
               "resend_after_seconds": RESEND_DELAY_SECONDS, "dev_code": None}
     kind, value = parse_identifier(data.identifier, DEFAULT_COUNTRY_CODE)
     user = _find_user(db, data.identifier)
+    if not user or not kind or user.role == models.Role.admin:
+        # Réponse identique pour l'utilisateur ; trace masquée côté serveur pour le diagnostic
+        from .. import otp_rules
+        print(f"[OTP] demande de code sans compte éligible pour : {otp_rules.mask_contact(kind or 'email', data.identifier)}", flush=True)
     if user and kind and user.role != models.Role.admin:
         if _contact(db, user) is None:   # compte historique : son e-mail est considéré vérifié
             db.add(models.UserContact(user_id=user.id, channel="email", verified=True,

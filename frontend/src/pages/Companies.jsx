@@ -18,7 +18,7 @@ export default function Companies() {
     <>
       <Seo title="Entreprises qui recrutent" description="Découvrez les entreprises qui recrutent et leurs offres actives." />
       <h2>{t("companies_title")}</h2>
-      <div className="card"><input placeholder={t("search_company")}n value={q}
+      <div className="card"><input placeholder={t("search_company")} value={q}
                                    onChange={(e) => setQ(e.target.value)} style={{ margin: 0 }} /></div>
       {error && <p className="error">{error}</p>}
       {shown.length === 0 && !error && <p className="muted">{t("no_company")}</p>}

@@ -74,9 +74,8 @@ export default function Admin() {
       <div className="card"><h3>Répartition</h3>
         <p>👤 {stats.candidates} candidats · 🏢 {stats.companies} entreprises · 🎓 {stats.offers_stage} offres de stage · 💼 {stats.offers_emploi} offres d'emploi</p></div>
       <div className="card"><h3>Comptes et essais gratuits</h3>
-        <div className="scroll"><table><thead><tr><th>E-mail</th><th>Rôle</th><th>Essai</th><th>Statut</th></tr></thead>
+        <div className="scroll"><table><thead><tr><th>E-mail</th><th>Rôle</th><th>Statut</th></tr></thead>
           <tbody>{accounts.map((a) => <tr key={a.user_id}><td>{a.email}</td><td>{a.role}</td>
-            <td>{a.trial_logins_used}/{a.trial_limit}</td>
             <td><select value={a.status} onChange={(e) => changeStatus(a.user_id, e.target.value)}>
               <option value="pending">En attente</option><option value="validated">Validé</option>
               <option value="active">Actif</option><option value="rejected">Refusé</option></select></td></tr>)}</tbody></table></div></div>

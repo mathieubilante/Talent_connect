@@ -21,7 +21,7 @@ Plateforme web et mobile intelligente de recrutement, d'emploi et de gestion des
 - Administration : statistiques, compétences les plus demandées, liste des utilisateurs.
 
 ## Comptes et sécurité (versions 0.3 et 0.4)
-- Statuts de compte (en attente, validé, actif, refusé) et essai gratuit limité à 30 connexions, historique des connexions.
+- Statuts de compte (en attente, validé, actif, refusé) et période d'utilisation gratuite de 14 jours, historique des connexions.
 - Inscription par e-mail ou téléphone avec code OTP (le code s'affiche dans le terminal du backend en mode démonstration).
 
 ## Prévu pour la suite

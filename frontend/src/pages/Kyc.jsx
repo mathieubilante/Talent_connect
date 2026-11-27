@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import api, { downloadDocument, errorMessage } from "../api";
+import { t } from "../i18n.js";
 
 const STATUS = {
-  submitted: ["Envoyé, en attente d'examen", "tag st-preselectionnee"],
-  approved: ["Validé", "tag st-acceptee"],
-  rejected: ["Refusé", "tag st-refusee"],
+  submitted: [t("kc_pending"), "tag st-preselectionnee"],
+  approved: [t("kc_validated"), "tag st-acceptee"],
+  rejected: [t("kc_refused"), "tag st-refusee"],
 };
 const size = (b) => (b > 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)} Mo` : `${Math.round(b / 1024)} Ko`);
 
@@ -29,19 +30,19 @@ export default function Kyc() {
       const res = await api.post("/kyc/documents", form);
       setData(res.data);
       setMessage(res.data.complete
-        ? "Dossier complet ✓ Il sera examiné par l'administration."
-        : "Document envoyé et stocké de façon chiffrée ✓");
+        ? t("kc_complete")
+        : t("kc_sent"));
     } catch (e) { setError(errorMessage(e)); }
     setBusy("");
   };
 
   const remove = async (id) => {
-    if (!window.confirm("Supprimer ce document ?")) return;
-    try { setData((await api.delete(`/kyc/documents/${id}`)).data); setMessage("Document supprimé"); }
+    if (!window.confirm(t("kc_confirm_delete"))) return;
+    try { setData((await api.delete(`/kyc/documents/${id}`)).data); setMessage(t("kc_deleted")); }
     catch (e) { setError(errorMessage(e)); }
   };
 
-  if (!data) return error ? <p className="error">{error}</p> : <p className="muted">Chargement…</p>;
+  if (!data) return error ? <p className="error">{error}</p> : <p className="muted">{t("kc_loading")}</p>;
   const done = data.required.length - data.missing.length;
   const pct = Math.round((done / data.required.length) * 100);
 
@@ -64,7 +65,7 @@ export default function Kyc() {
             <div className="row">
               <div><h3>{req.label}</h3><p className="muted">{req.help}</p></div>
               {doc ? <span className={STATUS[doc.status]?.[1] || "tag"}>{STATUS[doc.status]?.[0] || doc.status}</span>
-                   : <span className="tag stage">À fournir</span>}
+                   : <span className="tag stage">{t("kc_to_provide")}</span>}
             </div>
             {doc && (
               <p className="muted small">
@@ -81,7 +82,7 @@ export default function Kyc() {
                            onChange={(e) => setDates({ ...dates, [req.doc_type]: e.target.value })} />
                   </label>
                 )}
-                <label style={{ margin: 0, flex: 1 }}>{doc ? "Remplacer le fichier" : "Choisir le fichier"} (PDF, JPG ou PNG, 5 Mo max)
+                <label style={{ margin: 0, flex: 1 }}>{doc ? t("kc_replace") : t("kc_choose")} (PDF, JPG ou PNG, 5 Mo max)
                   <input type="file" accept="application/pdf,image/jpeg,image/png" disabled={busy === req.doc_type}
                          onChange={(e) => { upload(req, e.target.files[0]); e.target.value = ""; }} />
                 </label>
@@ -89,8 +90,8 @@ export default function Kyc() {
             )}
             {doc && (
               <div className="row end gap">
-                <button className="link" onClick={() => downloadDocument(doc.id, doc.original_name).catch((e) => setError(errorMessage(e)))}>Télécharger</button>
-                {!locked && <button className="btn-danger" onClick={() => remove(doc.id)}>Supprimer</button>}
+                <button className="link" onClick={() => downloadDocument(doc.id, doc.original_name).catch((e) => setError(errorMessage(e)))}>{t("kc_download")}</button>
+                {!locked && <button className="btn-danger" onClick={() => remove(doc.id)}>{t("kc_delete")}</button>}
               </div>
             )}
           </div>

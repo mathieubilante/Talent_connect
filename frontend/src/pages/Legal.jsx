@@ -9,9 +9,9 @@ export function PrivacyPage() {
     <article className="legal">
       <Seo title="Politique de confidentialité" description="Comment TalentConnect collecte, utilise et protège vos données personnelles." />
       <h1>Politique de confidentialité</h1>
-      <p className="muted">Dernière mise à jour : [22-11-2026]</p>
+      <p className="muted">Dernière mise à jour : novembre 2026</p>
       <h2>1. Qui est responsable de vos données ?</h2>
-      <p>TalentConnect,BILANTE Oupkil Mathieu, Lomé-togo, contact : bilantemathieu1@gmail.com.</p>
+      <p>TalentConnect, projet de plateforme de recrutement développé à Lomé (Togo). Contact : winmathieu1@gmail.com.</p>
       <h2>2. Quelles données collectons-nous ?</h2>
       <ul>
         <li><b>Compte</b> : adresse e-mail ou numéro de téléphone, mot de passe (stocké sous forme chiffrée, jamais en clair).</li>
@@ -31,9 +31,9 @@ export function PrivacyPage() {
       <h2>4. Qui peut voir vos données ?</h2>
       <p>Vos données ne sont pas vendues. Les recruteurs ne voient que les informations de votre profil et de votre candidature. Les documents d'identité ne sont consultables que par l'administration de la plateforme. Des prestataires techniques (hébergement, envoi de codes par e-mail ou SMS) reçoivent uniquement les informations nécessaires à leur service.</p>
       <h2>5. Combien de temps les conservons-nous ?</h2>
-      <p>Pendant la durée de votre compte, puis [durée à définir] après sa suppression. Les documents d'identité sont supprimés [durée à définir] après la décision sur votre compte, sauf obligation légale.</p>
+      <p>Pendant la durée de votre compte, puis 3 ans après sa suppression. Les documents d'identité sont supprimés 6 mois après la décision sur votre compte, sauf obligation légale.</p>
       <h2>6. Vos droits</h2>
-      <p>Vous pouvez demander l'accès, la rectification, la suppression de vos données ou leur transfert. Vous pouvez aussi retirer votre consentement aux mesures d'audience à tout moment. Écrivez à [adresse e-mail de contact].</p>
+      <p>Vous pouvez demander l'accès, la rectification, la suppression de vos données ou leur transfert. Vous pouvez aussi retirer votre consentement aux mesures d'audience à tout moment. Écrivez à winmathieu1@gmail.com.</p>
       <h2>7. Sécurité</h2>
       <p>Connexion chiffrée (HTTPS), mots de passe protégés, documents chiffrés, sessions limitées dans le temps, journal des accès aux documents.</p>
       <h2>8. Cookies et stockage local</h2>
@@ -48,15 +48,16 @@ export function TermsPage() {
     <article className="legal">
       <Seo title="Conditions générales d'utilisation" description="Conditions d'utilisation de la plateforme TalentConnect." />
       <h1>Conditions générales d'utilisation</h1>
-      <p className="muted">Dernière mise à jour : [date]</p>
+      <p className="muted">Dernière mise à jour : novembre 2026</p>
       <h2>1. Objet</h2>
       <p>Ces conditions encadrent l'utilisation de TalentConnect, plateforme de mise en relation entre candidats (emploi et stage) et entreprises.</p>
       <h2>2. Inscription</h2>
-      <p>L'inscription nécessite une adresse e-mail ou un téléphone vérifié. Vous êtes responsable de la confidentialité de vos identifiants. Les informations fournies doivent être exactes.</p>
+      <p>L'inscription nécessite une adresse e-mail vérifiée. Vous êtes responsable de la confidentialité de vos identifiants. Les informations fournies doivent être exactes.</p>
       <h2>3. Validation du compte</h2>
       <p>Certaines fonctions nécessitent la validation de votre compte par l'administration, à partir de documents d'identité. La validation peut être refusée, avec un motif.</p>
+      <p>Les candidats doivent disposer d'un abonnement actif pour consulter les offres des entreprises et postuler.</p>
       <h2>4. Essai gratuit et abonnements</h2>
-      <p>L'essai gratuit est limité à 30 connexions. Les abonnements donnent accès à des fonctions supplémentaires pour une durée choisie. Les tarifs affichés sont indiqués toutes taxes comprises [à confirmer]. Les conditions de remboursement sont [à définir].</p>
+      <p>Une période d'utilisation gratuite de 14 jours est proposée à compter de la création du compte. Les abonnements donnent accès à l'ensemble des fonctions pour une durée choisie. Les tarifs affichés sont indiqués toutes taxes comprises. Aucun remboursement n'est dû une fois la période d'abonnement commencée, sauf erreur de facturation.</p>
       <h2>5. Candidatures et offres</h2>
       <p>TalentConnect facilite la mise en relation mais ne garantit ni l'embauche ni l'exactitude des offres publiées. Les recruteurs sont responsables du contenu de leurs annonces. Toute offre trompeuse ou discriminatoire peut être retirée.</p>
       <h2>6. Comportements interdits</h2>
@@ -66,7 +67,7 @@ export function TermsPage() {
       <h2>8. Données personnelles</h2>
       <p>Le traitement des données est décrit dans la <Link to="/confidentialite">politique de confidentialité</Link>.</p>
       <h2>9. Droit applicable</h2>
-      <p>[Droit applicable et juridiction à définir].</p>
+      <p>Les présentes conditions sont soumises au droit togolais.</p>
       <p><Link to="/">← Retour à l'accueil</Link></p>
     </article>
   );

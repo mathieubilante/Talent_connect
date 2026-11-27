@@ -9,7 +9,7 @@ L'administrateur se connecte uniquement par mot de passe (pas de Google ni de co
 
 ## Ce que vous voyez dans la page Administration
 1. **Chiffres clés** : utilisateurs, offres, candidatures, compatibilité moyenne, compétences les plus demandées.
-2. **Comptes et essais gratuits** : chaque compte avec ses connexions d'essai et son statut (outil de support).
+2. **Comptes et statuts** : chaque compte avec son statut (en attente, validé, actif, refusé).
 3. **Examen des dossiers (KYC)** : les dossiers à examiner apparaissent en premier.
 4. **Abonnements et paiements** : montants encaissés, abonnements en cours, liste des paiements.
 5. **Sécurité** : comptes verrouillés (bouton Débloquer), tentatives échouées, dernières alertes.

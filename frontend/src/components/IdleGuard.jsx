@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api, { getRole, serverLogout } from "../api";
+import { t } from "../i18n.js";
 
 /* Déconnexion automatique après inactivité : avertissement 60 s avant, et signal d'activité régulier
    vers le serveur pour que sa propre minuterie d'inactivité reste synchronisée. */
@@ -56,7 +57,7 @@ export default function IdleGuard() {
       <div className="modal" style={{ maxWidth: 420, textAlign: "center" }}>
         <h3>⏱ Toujours là ?</h3>
         <p>Pour votre sécurité, vous serez déconnecté dans <b>{left} s</b> en raison de votre inactivité.</p>
-        <button className="btn full" onClick={stay}>Rester connecté</button>
+        <button className="btn full" onClick={stay}>{t("ig_stay")}</button>
       </div>
     </div>
   );

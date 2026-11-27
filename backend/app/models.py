@@ -96,6 +96,7 @@ class JobOffer(Base):
 
     company = relationship("Company", back_populates="offers")
     applications = relationship("Application", back_populates="offer")
+    views = relationship("OfferView", cascade="all, delete-orphan")
 
 
 class Application(Base):
@@ -303,3 +304,23 @@ class AlertPreference(Base):
     phone = Column(String(32), default="")
     telegram_chat_id = Column(String(40), default="")
     updated_at = Column(DateTime, default=datetime.utcnow)
+
+
+class OfferView(Base):
+    """Une consultation d'offre par un candidat (une seule fois par candidat et par offre)."""
+    __tablename__ = "offer_views"
+    __table_args__ = (UniqueConstraint("offer_id", "user_id", name="uq_offer_view"),)
+    id = Column(Integer, primary_key=True)
+    offer_id = Column(Integer, ForeignKey("job_offers.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ApplicationMessage(Base):
+    """Message échangé entre le candidat et le recruteur d'une candidature (texte seulement)."""
+    __tablename__ = "application_messages"
+    id = Column(Integer, primary_key=True)
+    application_id = Column(Integer, ForeignKey("applications.id"), nullable=False, index=True)
+    sender_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    body = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api, { errorMessage } from "../api";
+import Conversation from "../components/Conversation.jsx";
 import { t } from "../i18n.js";
 import Chips from "../components/Chips.jsx";
 import MatchBar from "../components/MatchBar.jsx";
@@ -71,6 +72,7 @@ export default function CompanySpace() {
             </div>
             <MatchBar score={a.match_score} level={a.match_level} />
             <Chips matched={a.matched_skills} missing={a.missing_skills} />
+          <details className="msg-box"><summary>{t("msg_open")}</summary><Conversation applicationId={a.id} /></details>
           </div>
         ))}
       </>)}
@@ -91,7 +93,7 @@ export default function CompanySpace() {
 
       {tab === "offres" && (active.length === 0 ? <p className="muted">{t("co_no_active")}</p> : active.map((o) => (
         <div className="card row" key={o.id}>
-          <div><h3>{o.title}</h3><p className="muted">{o.location} · {o.applications_count} {t("co_applications_count")}</p>
+          <div><h3>{o.title}</h3><p className="muted">{o.location} · {o.applications_count} {t("co_applications_count")} · {o.views_count} {t("co_views")}</p>
             <Chips plain={(o.required_skills || "").split(",").map((s) => s.trim()).filter(Boolean)} /></div>
           <button className="btn-danger" onClick={() => close(o.id)}>{t("co_close")}</button>
         </div>)))}

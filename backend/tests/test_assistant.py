@@ -36,8 +36,8 @@ def test_visiteur_offres_recentes():
 
 
 def test_visiteur_essai_gratuit():
-    assert "30 connexions" in reply("c'est gratuit ?", "visitor", {})["reply"]
+    assert "14 jours" in reply("c'est gratuit ?", "visitor", {})["reply"]
 
 
 def test_visiteur_connexions_gratuites_pas_confondu_avec_connexion():
-    assert "30 connexions" in reply("Combien de connexions gratuites ?", "visitor", {})["reply"]
+    assert "14 jours" in reply("Combien de temps c'est gratuit ?", "visitor", {})["reply"]

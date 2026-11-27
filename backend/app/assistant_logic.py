@@ -167,10 +167,10 @@ def _reply_visitor(t: str, ctx: dict) -> dict:
                          "adaptée à chaque offre, donne des conseils pour votre CV et vos entretiens. "
                          "Sans compte, je peux déjà vous expliquer comment utiliser le site.",
                 "quick_replies": ["Comment créer un compte ?", "Comment fonctionne le score ?"]}
-    if _has(t, "essai", "gratuit", "30", "connexions", "abonnement", "prix", "payer"):
-        return {"reply": "L'essai gratuit est limité à 30 connexions au total (et non à une durée). Le compteur est "
-                         "toujours visible. Ensuite, il faut valider votre compte avec vos documents d'identité puis "
-                         "souscrire un abonnement.", "quick_replies": ["Quels documents fournir ?"]}
+    if _has(t, "essai", "gratuit", "periode", "abonnement", "prix", "payer", "tarif"):
+        return {"reply": "Vous pouvez utiliser la plateforme gratuitement pendant 14 jours à partir de la création de "
+                         "votre compte. Ensuite, il faut souscrire un abonnement pour continuer. Les documents "
+                         "d'identité doivent être validés avant la souscription.", "quick_replies": ["Quels documents fournir ?"]}
     if _has(t, "compte", "inscri", "creer", "google", "telephone", "otp", "connexion", "connecter"):
         return {"reply": "Pour commencer : cliquez sur « S'inscrire », puis choisissez votre moyen : e-mail, numéro de "
                          "téléphone ou compte Google. Avec l'e-mail ou le téléphone, vous recevez un code à 6 chiffres "

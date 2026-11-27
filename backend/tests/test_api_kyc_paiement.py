@@ -125,31 +125,31 @@ def test_limite_de_3_offres_pendant_l_essai(client):
 
 
 def test_passage_de_l_essai_au_compte_actif_sans_perte_de_donnees(client):
+    """Un candidat abonné postule ; son abonnement se termine puis se renouvelle : rien n'est perdu."""
     _, comp = register(client, role="company", name="Entreprise Transition")
     offer = create_offer(client, comp, title="Stage Transition")
 
     email, token = register(client, name="Marie Transition")
     assert client.put("/profile/candidate", headers=H(token),
                       json={"skills": "python, sql", "education": "Licence Informatique"}).status_code == 200
+    complete_kyc(client, token)
+    admin_validate(client, email)
+    pay(client, token)
+    token = login_token(client, email)
+
     app_r = client.post("/applications", headers=H(token), json={"offer_id": offer["id"], "cover_letter": "Bonjour"})
     assert app_r.status_code == 201
     app_id, score = app_r.json()["id"], app_r.json()["match_score"]
     assert client.post(f"/favorites/{offer['id']}", headers=H(token)).status_code == 200
 
-    last = exhaust_trial(client, email)                                                   # essai épuisé : accès bloqué
-    assert client.get("/offers", headers=H(last)).status_code == 403
-    assert kyc_upload(client, last, "cin").status_code == 201
-    admin_validate(client, email)
-    _, res = pay(client, last)
-    assert res.json()["account"]["status"] == "active"
+    expire_subscriptions(email)            # l'abonnement arrive à échéance
+    pay(client, token)                     # renouvellement
+    token = login_token(client, email)
 
-    # accès rendu, et toutes les données sont retrouvées
-    assert client.get("/offers", headers=H(last)).status_code == 200
-    apps = client.get("/applications/mine", headers=H(last)).json()
+    apps = client.get("/applications/mine", headers=H(token)).json()
     assert any(a["id"] == app_id and a["match_score"] == score for a in apps)
-    assert any(o["id"] == offer["id"] for o in client.get("/favorites", headers=H(last)).json())
-    profile = client.get("/profile/candidate", headers=H(last)).json()
+    assert any(o["id"] == offer["id"] for o in client.get("/favorites", headers=H(token)).json())
+    profile = client.get("/profile/candidate", headers=H(token)).json()
     assert "python" in profile["skills"] and profile["education"] == "Licence Informatique"
-    acc = client.get("/account/me", headers=H(last)).json()
-    assert acc["status"] == "active" and acc["access_allowed"]
-    assert client.get("/billing/me", headers=H(last)).json()["workspace"] is not None
+    assert client.get("/account/me", headers=H(token)).json()["status"] == "active"
+

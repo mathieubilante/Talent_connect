@@ -105,7 +105,7 @@ export default function Login() {
           channel: form.channel, password: form.password, role: form.role, name: form.name,
           website: form.website || "",
           email: form.channel === "email" ? form.identifier : null,
-          phone: form.channel === "phone" ? form.identifier : null,
+          phone: null,
         };
         const { data } = await api.post("/auth/register", payload);
         goOtp(form.identifier, data.dev_code, data.resend_after_seconds, "register");
@@ -154,7 +154,7 @@ export default function Login() {
           {info && <p className="info">{info}</p>}
           {otp.devCode && <p className="devcode">{t("demo_code_is")} <b>{otp.devCode}</b></p>}
           <input className="otp-input" inputMode="numeric" maxLength={6} autoFocus placeholder="000000"
-                 value={otp.code} onChange={(e) => setOtp({ ...otp, code: e.target.value.replace(/\D/g, "") })} required />
+                 value={otp.code} onChange={(e) => { const v = e.target.value.replace(/\D/g, ""); setOtp((o) => ({ ...o, code: v })); }} required />
           {error && <p className="error">{error}</p>}
           <button className="btn full" type="submit" disabled={otp.code.length !== 6}>{t("verify")}</button>
           <button type="button" className="link" onClick={resend} disabled={otp.resendIn > 0}>
@@ -212,17 +212,11 @@ export default function Login() {
               {form.role === "company" ? t("company_name_label") : t("full_name")}
               <input value={form.name} onChange={set("name")} required />
             </label>
-            <div className="tabs small-tabs">
-              <button type="button" className={form.channel === "email" ? "on" : ""}
-                      onClick={() => setForm({ ...form, channel: "email", identifier: "" })}>{t("email_tab")}</button>
-              <button type="button" className={form.channel === "phone" ? "on" : ""}
-                      onClick={() => setForm({ ...form, channel: "phone", identifier: "" })}>{t("phone_tab")}</button>
-            </div>
           </>
         )}
         <label>
-          {!isLogin && form.channel === "phone" ? t("phone_example") : t("email_addr")}
-          <input type={!isLogin && form.channel === "phone" ? "text" : "email"}
+          {t("email_addr")}
+          <input type="email"
                  value={form.identifier} onChange={set("identifier")} required />
         </label>
         <input type="text" name="website" className="hp-field" tabIndex={-1} autoComplete="off" aria-hidden="true"

@@ -7,7 +7,7 @@ from . import models
 from .config import (ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_PASSWORD_FROM_ENV, CORS_ORIGINS, DATABASE_URL,
                      KYC_ENCRYPTION_KEY, OTP_DEV_MODE, SECRET_KEY, SEED_DEMO_DATA)
 from .database import Base, SessionLocal, engine
-from .routers import (account, admin, applications, assistant, auth, billing, favorites, imports, kyc,
+from .routers import (account, admin, applications, assistant, auth, billing, favorites, imports, kyc, messages,
                       notifications, offers, profiles, public, recommendations, security_center)
 from .security import hash_password, verify_password
 from .http_security import apply_security_headers
@@ -87,7 +87,7 @@ async def _security_headers(request, call_next):
     return response
 
 
-for r in (auth, account, profiles, offers, applications, favorites, notifications,
+for r in (auth, account, profiles, offers, applications, messages, favorites, notifications,
           recommendations, assistant, admin, kyc, public, billing, security_center, imports):
     app.include_router(r.router)
 app.include_router(kyc.admin_router)

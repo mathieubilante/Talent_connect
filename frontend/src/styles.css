@@ -523,3 +523,16 @@ a { color:#0b6b62; }
   .container { padding-bottom:96px; }
   .chat-fab { width:48px; height:48px; font-size:1.3rem; }
 }
+
+/* Messagerie candidat-recruteur (v0.25) */
+.msg-box { margin-top:10px; border-top:1px solid var(--line, #e6ecf1); padding-top:8px; }
+.msg-box summary { cursor:pointer; color:var(--blue); font-weight:600; font-size:.92rem; }
+.conversation { margin-top:10px; }
+.conv-list { max-height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding:6px 2px; }
+.bubble { max-width:80%; padding:8px 12px; border-radius:14px; font-size:.92rem; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
+.bubble small { display:block; font-size:.7rem; opacity:.7; margin-top:2px; }
+.bubble.mine { align-self:flex-end; background:#0b6b62; color:#fff; border-bottom-right-radius:4px; }
+.bubble.theirs { align-self:flex-start; background:var(--soft, #eef4f2); color:var(--text); border-bottom-left-radius:4px; }
+.conv-form { display:flex; gap:8px; margin-top:8px; align-items:flex-end; }
+.conv-form textarea { flex:1; resize:vertical; }
+@media (max-width:600px) { .conv-form { flex-direction:column; align-items:stretch; } .bubble { max-width:92%; } }

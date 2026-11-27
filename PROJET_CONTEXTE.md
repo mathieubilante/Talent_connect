@@ -12,7 +12,7 @@ IA : scikit-learn (TF-IDF), pdfplumber. Frontend : React (Vite), axios, react-ro
 
 ## Structure
 - backend/app : main.py, config.py, database.py, models.py, schemas.py, security.py, services.py
-  - account_rules.py (règles pures : statuts, essai 30 connexions) · accounts.py (accès base des comptes)
+  - account_rules.py (règles pures : statuts, période d'utilisation de 14 jours) · accounts.py (accès base des comptes)
   - kyc_rules.py (règles pures KYC) · crypto.py (chiffrement Fernet) · routers/kyc.py
   - search_rules.py (offres similaires, pagination) · routers/public.py (API publique sans connexion)
   - otp_rules.py (règles pures OTP) · otp.py (création/vérification des codes) · delivery.py (envoi : console ou SMTP)
@@ -29,7 +29,7 @@ users, candidates, companies, job_offers, applications, favorites, notifications
 **kyc_documents** (métadonnées des documents), **kyc_access_log** (journal d'audit : dépôt, consultation, suppression).
 
 ## Cahier des charges "cycle de vie du compte" (réalisé par étapes)
-1. Statuts (pending, validated, active, rejected) + essai gratuit limité à **30 connexions au total** (pas une durée) + historique des connexions : **FAIT (étape 1)**
+1. Statuts (pending, validated, active, rejected) + période d'utilisation gratuite de **14 jours** (remplace la limite de 30 connexions, supprimée) + historique des connexions : **FAIT (étape 1)**
 2. Inscription e-mail/téléphone + code OTP : **FAIT (étape 2)**
 3. Documents KYC (CIN ; entreprises : CIN représentant, patente, extrait RNE < 3 mois), stockage chiffré : **FAIT (étape 3)**
 4. Validation/refus administrateur : **FAIT (étape 4)**
@@ -70,7 +70,7 @@ users, candidates, companies, job_offers, applications, favorites, notifications
 - Un compte déjà `validated` ou `active` ne peut plus être re-décidé. L'ancien `PATCH /admin/accounts/{id}/status` reste comme outil de support/démo.
 - Notification à l'utilisateur à chaque décision ; journal d'audit étendu (`approve`, `reject`, `account_validated`, `account_rejected` dans `kyc_access_log`). Aucune nouvelle table : colonnes déjà prévues à l'étape 3.
 - Interface : l'administrateur voit les dossiers à examiner en premier ; « Mon compte » affiche un suivi des étapes (OTP, documents, validation, abonnement).
-- Règles dans `review_rules.py`. `validated` reste soumis à la limite des 30 connexions tant que l'abonnement n'est pas payé (étape 5).
+- Règles dans `review_rules.py`. Après 14 jours sans abonnement actif, les fonctions demandent l'abonnement (code `SUBSCRIPTION_REQUIRED`).
 
 ## Site d'emploi public (version 0.7)
 - Un visiteur NON connecté peut parcourir le site comme un site d'emploi : accueil avec recherche (mot-clé, lieu, type), recherches populaires, secteurs, offres récentes, entreprises ; liste d'offres avec filtres (type, secteur, lieu) et pagination ; détail d'une offre avec offres similaires ; annuaire et profil des entreprises.
@@ -88,7 +88,7 @@ users, candidates, companies, job_offers, applications, favorites, notifications
 
 ## Étapes 5 et 6 + application installable (version 0.9)
 - **Abonnement et paiement** : `pricing.py` (offres `candidat_premium` 2 000 FCFA/mois et `entreprise_pro` 15 000 FCFA/mois, remises 5/10/20 % sur 3/6/12 mois : tarifs de démonstration à confirmer), `billing_rules.py` (règles pures), `billing.py` (devis, paiement, activation, expiration), `routers/billing.py`. Flux : compte `validated` → `POST /billing/checkout` (prix calculé par le serveur, jamais par le navigateur) → paiement **simulé** `POST /billing/payments/{id}/simulate` → compte `active`, abonnement avec dates, **espace dédié** (`workspaces`), reçu `REC-AAAA-NNNNNN`, notification. Un paiement ne peut être traité qu'une fois (verrou atomique). Renouvellement : la nouvelle période prolonge la précédente. Un abonnement échu remet le compte à `validated` (jamais pour un compte activé manuellement sans abonnement).
-- **Restriction levée à l'activation** : en essai/validé, une entreprise ne peut avoir que 3 offres actives (`OFFER_LIMIT`) ; l'abonnement Pro autorise 50 offres. Fin des 30 connexions d'essai.
+- **Restriction levée à l'activation** : en essai/validé, une entreprise ne peut avoir que 3 offres actives (`OFFER_LIMIT`) ; l'abonnement Pro autorise 50 offres. Période d'utilisation de 14 jours.
 - **Sessions** : table `user_sessions` ; le jeton JWT contient `sid`. Une nouvelle connexion ferme la précédente (`SESSION_REVOKED`), inactivité de 30 min (`SESSION_IDLE`), durée max 12 h (`SESSION_EXPIRED`), `POST /auth/logout` ferme la session côté serveur. Côté site : `IdleGuard` (avertissement 60 s avant, signal d'activité toutes les 4 min), message sur la page de connexion. Règles dans `session_rules.py` ; paramètres `SESSION_IDLE_MINUTES`, `SESSION_MAX_HOURS`.
 - **PWA** : `manifest.webmanifest`, `sw.js` (cache de la coquille, jamais l'API), `offline.html`, icônes, bouton d'installation (`PwaTools.jsx`), bandeau hors ligne. Service worker enregistré en production seulement.
 - Pas encore fait : vrai fournisseur de paiement, alertes de sécurité (e-mail/SMS/WhatsApp/Telegram), détection de comportements suspects, limitation des tentatives de connexion (étape 7), stockage permanent des documents.
@@ -102,14 +102,14 @@ users, candidates, companies, job_offers, applications, favorites, notifications
 - `ADMIN_PASSWORD` défini = devient le mot de passe de l'administrateur au démarrage (rotation possible). Voir GUIDE_ADMINISTRATEUR.md.
 
 ## Étape 8 : tests d'intégration, passage essai → actif, déploiement (version 0.11)
-- **Tests d'intégration** (`backend/tests/test_api_*.py`, `conftest.py`, `tests/helpers.py`) : TestClient FastAPI sur une base SQLite temporaire (variables définies avant l'import). Couvrent : inscription OTP, mauvais codes, connexion par code, téléphone, essai de 30 connexions et blocage, session unique/déconnexion, Google non configuré, documents chiffrés sur le disque et accès contrôlé, extrait RNE trop ancien, validation/refus administratif, devis non falsifiable, paiement/échec/double paiement, expiration et renouvellement, limite de 3 offres en essai, **passage de l'essai au compte actif sans perte de données** (profil, candidature, score, favoris conservés), alertes, verrouillage, déblocage, préférences, routes admin, routes publiques, assistant public, `/health`.
+- **Tests d'intégration** (`backend/tests/test_api_*.py`, `conftest.py`, `tests/helpers.py`) : TestClient FastAPI sur une base SQLite temporaire (variables définies avant l'import). Couvrent : inscription OTP, mauvais codes, connexion par code, téléphone, période d'utilisation et demande d'abonnement, session unique/déconnexion, Google non configuré, documents chiffrés sur le disque et accès contrôlé, extrait RNE trop ancien, validation/refus administratif, devis non falsifiable, paiement/échec/double paiement, expiration et renouvellement, limite de 3 offres en essai, **passage de l'essai au compte actif sans perte de données** (profil, candidature, score, favoris conservés), alertes, verrouillage, déblocage, préférences, routes admin, routes publiques, assistant public, `/health`.
 - `GET /health` : vérifie l'API et la base. `startup_checks.py` : avertissements `[SÉCURITÉ]` au démarrage (SECRET_KEY, ADMIN_PASSWORD, clé KYC, OTP_DEV_MODE, CORS, SQLite hébergé).
 - `tools/backup.py` + `4_SAUVEGARDER.bat` : sauvegarde de la base et des documents chiffrés. `5_TESTER.bat` : lance les tests. `.github/workflows/tests.yml` : tests de l'API + compilation du site à chaque push.
 - **Statut honnête** : les tests d'intégration ont été écrits mais PAS exécutés dans l'environnement de rédaction (pas de FastAPI installé ni d'accès réseau) : première exécution à faire (5_TESTER.bat ou GitHub Actions) ; des ajustements mineurs sont possibles.
 
 ## Comptes de démonstration (python -m app.seed, mot de passe Demo1234!)
 Entreprises : tech@demo.tg, agri@demo.tg, finance@demo.tg · Candidats actifs : kofi@, ama@, yao@, afi@demo.tg
-Essai : essai@demo.tg (27/30 connexions) · Admin : admin@talentconnect.tg / Admin2026!
+Démo : essai@demo.tg (compte en période d'utilisation) · Admin : admin@talentconnect.tg / Admin2026!
 
 ## Règles de travail avec l'IA
 Expliquer chaque modification simplement en français, ne pas casser les routes existantes, donner le code complet des fichiers modifiés, indiquer comment tester, mettre à jour JOURNAL.md et ce fichier.

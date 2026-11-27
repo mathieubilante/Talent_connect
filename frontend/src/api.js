@@ -21,7 +21,8 @@ api.interceptors.response.use((r) => r, (err) => {
     window.location.href = "/account";
   }
   if (err?.response?.status === 403 && typeof d === "string" && d.startsWith("SUBSCRIPTION_REQUIRED")) {
-    window.dispatchEvent(new Event("subscription-required"));
+    const reason = d.startsWith("SUBSCRIPTION_REQUIRED_APPLY") ? "apply" : "period";
+    window.dispatchEvent(new CustomEvent("subscription-required", { detail: { reason } }));
   }
   if (err?.response?.status === 401 && localStorage.getItem("token")) {
     // Jeton périmé, révoqué ou inconnu : on efface la session et on renvoie UNE SEULE FOIS vers la connexion

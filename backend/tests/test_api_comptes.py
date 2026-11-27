@@ -6,7 +6,7 @@ from tests.helpers import (H, PASSWORD, age_otp_codes, exhaust_trial, login, log
 def test_inscription_par_code_otp(client):
     email, token = register(client)
     data = client.get("/account/me", headers=H(token)).json()
-    assert data["status"] == "pending" and data["trial_logins_used"] == 1 and data["trial_remaining"] == 29
+    assert data["status"] == "pending" and data["trial_logins_used"] == 1 and data["access_allowed"]
 
 
 def test_connexion_refusee_tant_que_le_code_n_est_pas_saisi(client):
@@ -65,20 +65,13 @@ def test_mot_de_passe_incorrect(client):
     assert login(client, email, password="mauvais-mot-de-passe").status_code == 401
 
 
-def test_essai_de_30_connexions_puis_blocage(client):
+def test_connexions_illimitees_sans_blocage(client):
     email, _ = register(client)
     last = exhaust_trial(client, email)
     acc = client.get("/account/me", headers=H(last)).json()
-    assert acc["trial_logins_used"] == 30 and acc["trial_exhausted"] and not acc["access_allowed"]
-    blocked = client.get("/offers", headers=H(last))
-    assert blocked.status_code == 403 and blocked.json()["detail"].startswith("TRIAL_EXPIRED")
-    # l'utilisateur peut encore soumettre ses documents et consulter les abonnements
+    assert acc["access_allowed"] and not acc["trial_exhausted"]
+    assert client.get("/offers", headers=H(last)).status_code == 200
     assert client.get("/kyc/me", headers=H(last)).status_code == 200
-    assert client.get("/billing/plans", headers=H(last)).status_code == 200
-    # une 31e connexion n'augmente pas le compteur
-    again = login_token(client, email)
-    assert client.get("/account/me", headers=H(again)).json()["trial_logins_used"] == 30
-
 
 def test_session_unique_et_deconnexion(client):
     email, first = register(client)

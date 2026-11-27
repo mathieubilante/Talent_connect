@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api";
+import { t } from "../i18n.js";
 
 export default function Notifications() {
   const [items, setItems] = useState([]);
@@ -13,7 +14,7 @@ export default function Notifications() {
   return (
     <>
       <h2>🔔 Notifications</h2>
-      {items.length === 0 && <p className="muted">Aucune notification pour le moment.</p>}
+      {items.length === 0 && <p className="muted">{t("nt_empty")}</p>}
       {items.map((n) => (
         <div key={n.id} className={`card notif ${n.is_read ? "" : "unread"}`}>
           <p>{n.message}</p>

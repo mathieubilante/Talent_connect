@@ -141,6 +141,7 @@ class OfferOut(BaseModel):
     missing_skills: list[str] = []
     is_favorite: bool = False
     applications_count: int = 0
+    views_count: int = 0
     company_id: int = 0
     company_sector: str = ""
     company_city: str = ""

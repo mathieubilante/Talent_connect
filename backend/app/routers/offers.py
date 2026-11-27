@@ -15,6 +15,14 @@ from ..security import get_current_user, require_role
 router = APIRouter(prefix="/offers", tags=["Offres"])
 
 
+def require_candidate_subscription(db, user) -> None:
+    """Un candidat doit avoir un abonnement actif pour consulter les offres et postuler."""
+    from ..accounts import get_or_create_account
+    if user.role == models.Role.candidate:
+        if get_or_create_account(db, user).status != "active":
+            raise HTTPException(403, "SUBSCRIPTION_REQUIRED_APPLY: Abonnez-vous pour postuler à une offre.")
+
+
 def offer_to_out(offer: models.JobOffer, candidate: Optional[models.Candidate] = None,
                  fav_ids: frozenset = frozenset()) -> schemas.OfferOut:
     out = schemas.OfferOut.model_validate(offer)
@@ -23,6 +31,7 @@ def offer_to_out(offer: models.JobOffer, candidate: Optional[models.Candidate] =
     out.company_city = offer.company.city or ""
     out.is_favorite = offer.id in fav_ids
     out.applications_count = len(offer.applications)
+    out.views_count = len(offer.views)
     if candidate:
         a = analyze_match(candidate.skills, candidate.cv_text, offer.title,
                           offer.description, offer.required_skills)
@@ -93,6 +102,12 @@ def get_offer(offer_id: int, db: Session = Depends(get_db),
     offer = db.get(models.JobOffer, offer_id)
     if not offer:
         raise HTTPException(404, "Offre introuvable")
+    if user.role == models.Role.candidate:
+        seen = db.query(models.OfferView).filter_by(offer_id=offer.id, user_id=user.id).first()
+        if not seen:
+            db.add(models.OfferView(offer_id=offer.id, user_id=user.id))
+            db.commit()
+            db.refresh(offer)
     candidate = user.candidate if user.role == models.Role.candidate else None
     return offer_to_out(offer, candidate, favorite_ids(db, user))
 
